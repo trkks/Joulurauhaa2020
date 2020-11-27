@@ -1,0 +1,7 @@
+*.swp
+*.txt
+bin
+obj
+Content/bin
+Content/obj
+debug_*
