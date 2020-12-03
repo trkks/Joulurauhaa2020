@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace Joulurauhaa2020
 {
-    public class JR2020 : Game
+    public class GameJR2020 : Game
     {
         // Primitive fields
         private int screenWidth;
@@ -16,14 +16,19 @@ namespace Joulurauhaa2020
         private GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
         private GraphicsDevice device; // "The hardware graphical device"
-        private ElfFactory elfFactory;
+        private static Random random = new Random();
+        private static Vector2 playerStartPosition = new Vector2(400, 400);
 
         // Gameobjects
         private List<Elf> elves;
         private Wall[] walls;
         private Santa player;
 
-        public JR2020()
+        private List<ICollidable> collidables;
+        private List<IDrawable> drawables;
+        private List<IUpdatable> updatables;
+
+        public GameJR2020()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
@@ -49,21 +54,44 @@ namespace Joulurauhaa2020
             screenWidth = device.PresentationParameters.BackBufferWidth;
             screenHeight = device.PresentationParameters.BackBufferHeight;
 
-            player = new Santa();
+            player = new Santa(playerStartPosition, 
+                Content.Load<Texture2D>("white_square_and_circle")
+            );
 
             elves = new List<Elf>(100);
 
-            elfFactory = new ElfFactory(
-                Content.Load<Texture2D>("debug_white_square") //elf_atlas")
+            var elfPosition = new Vector2(
+                (float)random.NextDouble() * (float)screenWidth,
+                (float)random.NextDouble() * (float)screenHeight
+            );
+
+            elves.Add(new Elf(elfPosition,
+                    Content.Load<Texture2D>("white_square_and_circle"))//elf_atlas"))
             );
             
             var wallTexture = Content.Load<Texture2D>("debug_white_square");//wall");
             walls = new Wall[] {
-                new Wall(Wall.Position.Left),
-                new Wall(Wall.Position.Right),
-                new Wall(Wall.Position.Top),
-                new Wall(Wall.Position.Bottom)
+                new Wall(Wall.Edge.Left),
+                new Wall(Wall.Edge.Right),
+                new Wall(Wall.Edge.Top),
+                new Wall(Wall.Edge.Bottom)
             };
+
+            // Simplify updates by adding into generic collections
+            
+            collidables = new List<ICollidable>(105);
+            collidables.Add(player);
+            collidables.AddRange(elves);
+            collidables.AddRange(walls);
+
+            drawables = new List<IDrawable>(105);
+            drawables.Add(player);
+            drawables.AddRange(elves);
+            drawables.AddRange(walls);
+
+            updatables = new List<IUpdatable>(101);
+            updatables.Add(player);
+            updatables.AddRange(elves);
         }
 
         protected override void Update(GameTime gameTime)
@@ -72,41 +100,25 @@ namespace Joulurauhaa2020
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            player.Update(gameTime);
-
-            foreach (Elf elf in elves)
+            // Update all updatables
+            foreach (IUpdatable updatable in updatables)
             {
-                elf.Update(gameTime);
+                updatable.Update(gameTime);
             }
 
             // Check collisions between all collidables
             // O(n^2)
-            foreach (Elf elf in elves)
+            foreach (ICollidable collidable in collidables)
             {
-                // Check player-to-elf in same iteration
-                player.ResolveIfColliding(elf); 
-
-                elf.ResolveIfColliding(player);
-
-                foreach (Elf target in elves)
+                foreach (ICollidable target in collidables)
                 {
-                    if (target != elf)
+                    if (collidable != target)
                     {
-                        elf.ResolveIfColliding(target);
+                        collidable.ResolveIfColliding(target);
                     }
                 }
-
-                foreach (Wall target in walls)
-                {
-                    elf.ResolveIfColliding(target);
-                }
             }
-            foreach (Wall wall in walls)
-            {
-                player.ResolveIfColliding(wall);
-            }
-            // Wall-to-collidable need not be resolved, as they are static
-            
+           
             base.Update(gameTime);
         }
 
@@ -116,45 +128,10 @@ namespace Joulurauhaa2020
 
             spriteBatch.Begin();
             
-            foreach (Elf elf in elves)
+            foreach (IDrawable drawable in drawables)
             {
-                elf.Draw(spriteBatch);
+                drawable.Draw(spriteBatch);
             }
-
-            player.Draw(spriteBatch);
-
-            foreach (Wall wall in walls)
-            {
-                wall.Draw(spriteBatch);
-            }
-
-            //var textureOrigin = new Vector2(128f); 
-            //float a = textureOrigin.Length();
-            //float b = new Vector2(256f).Length() + 128f;
-
-            //spriteBatch.Draw(
-            //    Content.Load<Texture2D>("debug_white_square"), 
-            //    new Vector2(a),
-            //    null, 
-            //    Color.Red, 
-            //    (float)(Math.PI/4.0), 
-            //    textureOrigin, 
-            //    1, 
-            //    SpriteEffects.None,
-            //    0
-            //);
-
-            //spriteBatch.Draw(
-            //    Content.Load<Texture2D>("debug_white_circle"), 
-            //    new Vector2(b, a),
-            //    null, 
-            //    Color.Blue, 
-            //    0,
-            //    textureOrigin,
-            //    1, 
-            //    SpriteEffects.None,
-            //    0
-            //);
 
             spriteBatch.End();
 

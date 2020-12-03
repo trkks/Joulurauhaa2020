@@ -7,7 +7,7 @@ namespace Joulurauhaa2020
         [STAThread]
         static void Main()
         {
-            using (var game = new JR2020())
+            using (var game = new GameJR2020())
                 game.Run();
         }
     }

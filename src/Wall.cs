@@ -5,7 +5,7 @@ namespace Joulurauhaa2020
 {
     public class Wall : ICollidable, IDrawable
     {
-        public enum Position
+        public enum Edge
         {
             Left,
             Right,
@@ -15,21 +15,21 @@ namespace Joulurauhaa2020
 
         public float angle;
 
-        public Vector2 position;
         public Vector2 origin;
+        public Vector2 position;
 
-        public Rectangle Bounds { get; }
+        public RectangleBody Body { get; set; }
 
-        public Wall(Wall.Position index)
+        public Wall(Wall.Edge index)
         { }
 
         public void Draw(SpriteBatch spriteBatch)
         { }
 
         public void ResolveIfColliding(ICollidable target)
-        { /* static - no response */}
+        { /* static - no response */ }
 
         public void Update(GameTime gameTime)
-        { }
+        { /* static - no action */ }
     }
 }

@@ -5,7 +5,6 @@ namespace Joulurauhaa2020
 {
     public interface ICollidable
     {
-        Rectangle Bounds { get; }
         void ResolveIfColliding(ICollidable target);
     }
     
