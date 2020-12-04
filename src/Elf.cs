@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -11,6 +12,8 @@ namespace Joulurauhaa2020
         public float angle;
         public int spriteIndex;
 
+        // updateAction kinda mimicking the strategy pattern
+        public Action<GameTime> updateAction;
         public Color color;
         public Rectangle spriteRect;
         public Texture2D spriteAtlas;
@@ -22,6 +25,7 @@ namespace Joulurauhaa2020
         public Elf(Vector2 position, Texture2D spriteAtlas)
         {
             this.Body = new CircleBody(128, position);
+            this.updateAction = gameTime => { return; };
             this.color = Color.Green;
             this.spriteRect = new Rectangle(0,0, 256,256);
             this.spriteAtlas = spriteAtlas;
@@ -56,21 +60,20 @@ namespace Joulurauhaa2020
 
         public void ResolveIfColliding(ICollidable target)
         { 
+            if (!this.Body.isActive) 
+                return;
+
             switch (target)
             {
             case Santa santa:
                 if (this.Body.Colliding(santa.Body))
                 {
-                    System.Console.WriteLine("Elf collision to Santa");
+                    //System.Console.WriteLine("Elf collision to Santa");
                     this.color = Color.LightGreen;
 
-                    // TODO maybe google for a more efficient way for this?
-                    do
-                    {
-                        this.Body.position -= Vector2.Normalize( 
-                            santa.Body.position - this.Body.position);
-
-                    } while (this.Body.Colliding(santa.Body));
+                    // Do not check for collisions when attached to santa
+                    this.Body.isActive = false;
+                    this.updateAction = CreateAttach(santa, this.Body.position);
                 }
                 else
                 {
@@ -84,18 +87,30 @@ namespace Joulurauhaa2020
 
             default:
                 /* Actual default implementation not needed */
-                System.Console.WriteLine($"{this} at {target}");
+                //System.Console.WriteLine($"{this} at {target}");
                 break;
             };
         }
 
         public void Update(GameTime gameTime)
         {
-            var mState = Mouse.GetState();
-            
-            if (mState.RightButton == ButtonState.Pressed)
-            this.Body.position = new Vector2((float)mState.Position.X, 
-                                             (float)mState.Position.Y);
+            this.updateAction(gameTime);
+        }
+
+        /// <summary>
+        /// Create an action that updates elf's position according to collPos
+        /// so that the elf seems to be attached to santa
+        /// </summary>
+        private Action<GameTime> CreateAttach(Santa santa, Vector2 collPos)
+        {
+            var v = Vector2.Normalize(this.Body.position - santa.Body.position);
+            v *= santa.Body.radius;
+            return (gameTime) => {
+                //Console.WriteLine($"Elf attached at {santa.Body.position + v}");
+                // TODO Attach to santa where first collided with correct angle
+                // something change to santa's basis something matrix transform
+                this.Body.position = santa.Body.position + v;
+            };
         }
     }
 }

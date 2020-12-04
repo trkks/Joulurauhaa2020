@@ -5,11 +5,13 @@ namespace Joulurauhaa2020
 {
     public class CircleBody
     {
+        public bool isActive;
         public float radius;
         public Vector2 position;
 
         public CircleBody(float squareW, Vector2 position)
         {
+            this.isActive = true;
             // Set to the maximum radius for a circle in square
             this.radius = (float)(0.5 * Math.Sqrt(2.0 * squareW * squareW));
             this.position = position;

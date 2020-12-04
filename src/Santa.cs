@@ -67,7 +67,7 @@ namespace Joulurauhaa2020
                 case Elf elf:
                     if (this.Body.Colliding(elf.Body))
                     {
-                        System.Console.WriteLine("Santa collision to Elf");
+                        //System.Console.WriteLine("Santa collision to Elf");
                         this.color = Color.Pink;
                     }
                     else

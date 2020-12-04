@@ -60,15 +60,18 @@ namespace Joulurauhaa2020
 
             elves = new List<Elf>(100);
 
-            var elfPosition = new Vector2(
-                (float)random.NextDouble() * (float)screenWidth,
-                (float)random.NextDouble() * (float)screenHeight
-            );
+            for (int i = 0; i < 10; ++i)
+            {
+                var elfPosition = new Vector2(
+                    (float)random.NextDouble() * (float)screenWidth,
+                    (float)random.NextDouble() * (float)screenHeight
+                );
 
-            elves.Add(new Elf(elfPosition,
-                    Content.Load<Texture2D>("white_square_and_circle"))//elf_atlas"))
-            );
-            
+                elves.Add(new Elf(elfPosition,
+                        Content.Load<Texture2D>("white_square_and_circle"))//elf_atlas"))
+                );
+            }
+
             var wallTexture = Content.Load<Texture2D>("debug_white_square");//wall");
             walls = new Wall[] {
                 new Wall(Wall.Edge.Left),
