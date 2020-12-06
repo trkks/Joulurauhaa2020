@@ -16,20 +16,17 @@ namespace Joulurauhaa2020
         public bool mLeftReleased;
         public float speed;
 
-        public Vector2 direction;
         public AnimatedTexture2D animation;
         public CircleBody body;
         public Stack<IProjectile> projectiles;
+        public Vector2 direction;
 
         public Santa(Vector2 position, Texture2D spriteAtlas)
         {
             this.body = new CircleBody(256, position);
             this.animation = new AnimatedTexture2D(spriteAtlas, 
-                new Vector2(64,64), new Vector2(20,32));
-            //this.color = Color.Red;
-            //this.spriteRect = new Rectangle(0,0, 256,256);
-            //this.spriteAtlas = spriteAtlas;
-            //this.spriteOrigin = new Vector2(128,128);
+                new Point(64,64), new Vector2(20,32),
+                new uint[5] { 2, 4, 10, 2, 5 });
             this.projectiles = new Stack<IProjectile>(13); //max_elves+bottle
 
             this.speed = 300;
@@ -39,6 +36,8 @@ namespace Joulurauhaa2020
         {
             this.animation.Draw(spriteBatch, this.body.position, 
                 this.body.angle);
+
+            // NOTE debug shapes:
             //spriteBatch.Draw(
             //    this.spriteAtlas,
             //    this.body.position,
@@ -103,8 +102,6 @@ namespace Joulurauhaa2020
             this.body.position += (this.direction * this.speed) * deltaTime;
         }
 
-        // FIXME simultaneous moving and hitting seems inconsistent...
-        // Problem with animation?
         private void ProcessInput()
         {
             /* Get needed variables */

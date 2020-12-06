@@ -69,7 +69,7 @@ namespace Joulurauhaa2020
                 );
 
                 elves.Add(new Elf(elfPosition,
-                        Content.Load<Texture2D>("white_square_and_circle"))//elf_atlas"))
+                        Content.Load<Texture2D>("elf_atlas"))
                 );
             }
 

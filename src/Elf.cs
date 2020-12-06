@@ -9,58 +9,53 @@ namespace Joulurauhaa2020
     {
         public bool alive;
         public float speed;
-        public float angle;
-        public int spriteIndex;
 
         // updateAction kinda mimicking the strategy pattern
         public Action<float> updateAction;
-        public Color color;
-        public Rectangle spriteRect;
-        public Texture2D spriteAtlas;
+        public AnimatedTexture2D animation;
+        public CircleBody body;
         public Vector2 direction;
         public Vector2 spriteOrigin;
-        public CircleBody body;
-
-        public Vector2 Direction 
-        { 
-            get => this.direction;
-            set => this.direction = value;
-        }
 
         public Elf(Vector2 position, Texture2D spriteAtlas)
         {
             this.body = new CircleBody(128, position);
+            this.animation = new AnimatedTexture2D(spriteAtlas, 
+                new Point(16,16), new Vector2(8,8),
+                new uint[4] { 5, 3, 5, 3 });
             this.updateAction = deltaTime => { return; };
-            this.color = Color.Green;
-            this.spriteRect = new Rectangle(0,0, 256,256);
-            this.spriteAtlas = spriteAtlas;
-            this.spriteOrigin = new Vector2(128, 128);
+            // Start animation
+            this.animation.Toggle();
         }
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(
-                this.spriteAtlas,
-                this.body.position,
-                new Rectangle(257,0, 256,256),// spriteRect,
-                Color.White,
-                0f,// angle,
-                spriteOrigin,
-                this.body.radius/128, //scale
-                SpriteEffects.None,
-                0
-            ); 
-            spriteBatch.Draw(
-                this.spriteAtlas,
-                this.body.position,
-                new Rectangle(0,0, 256,256),// spriteRect,
-                this.color,
-                this.angle,
-                this.spriteOrigin,
-                0.5f,
-                SpriteEffects.None,
-                0
-            );
+            this.animation.Draw(spriteBatch, this.body.position, 
+                this.body.angle);
+
+            // NOTE debug shapes:
+            //spriteBatch.Draw(
+            //    this.spriteAtlas,
+            //    this.body.position,
+            //    new Rectangle(257,0, 256,256),// spriteRect,
+            //    Color.White,
+            //    0f,// angle,
+            //    spriteOrigin,
+            //    this.body.radius/128, //scale
+            //    SpriteEffects.None,
+            //    0
+            //); 
+            //spriteBatch.Draw(
+            //    this.spriteAtlas,
+            //    this.body.position,
+            //    new Rectangle(0,0, 256,256),// spriteRect,
+            //    this.color,
+            //    this.angle,
+            //    this.spriteOrigin,
+            //    0.5f,
+            //    SpriteEffects.None,
+            //    0
+            //);
         }
 
         public void ResolveIfColliding(ICollidable target)
@@ -74,7 +69,7 @@ namespace Joulurauhaa2020
                 if (this.body.Colliding(santa.body))
                 {
                     //System.Console.WriteLine("Elf collision to Santa");
-                    this.color = Color.LightGreen;
+                    this.animation.color = Color.Pink;
 
                     // Do not check for collisions when attached to santa
                     this.body.isActive = false;
@@ -84,7 +79,7 @@ namespace Joulurauhaa2020
                 }
                 else
                 {
-                    this.color = Color.Green;
+                    this.animation.color = Color.White;
                 }
                 break;
 
