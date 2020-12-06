@@ -18,7 +18,7 @@ namespace Joulurauhaa2020
         public Vector2 origin;
         public Vector2 position;
 
-        public RectangleBody Body { get; set; }
+        public RectangleBody body;
 
         public Wall(Wall.Edge index)
         { }
@@ -29,7 +29,7 @@ namespace Joulurauhaa2020
         public void ResolveIfColliding(ICollidable target)
         { /* static - no response */ }
 
-        public void Update(GameTime gameTime)
+        public void Update(float deltaTime)
         { /* static - no action */ }
     }
 }

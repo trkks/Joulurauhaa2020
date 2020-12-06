@@ -37,6 +37,18 @@
 /processorParam:TextureFormat=Color
 /build:debug_white_square.png
 
+#begin santa_atlas.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:santa_atlas.png
+
 #begin white_square_and_circle.png
 /importer:TextureImporter
 /processor:TextureProcessor

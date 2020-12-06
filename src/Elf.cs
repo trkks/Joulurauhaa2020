@@ -13,19 +13,24 @@ namespace Joulurauhaa2020
         public int spriteIndex;
 
         // updateAction kinda mimicking the strategy pattern
-        public Action<GameTime> updateAction;
+        public Action<float> updateAction;
         public Color color;
         public Rectangle spriteRect;
         public Texture2D spriteAtlas;
         public Vector2 direction;
         public Vector2 spriteOrigin;
+        public CircleBody body;
 
-        public CircleBody Body { get; set; }
+        public Vector2 Direction 
+        { 
+            get => this.direction;
+            set => this.direction = value;
+        }
 
         public Elf(Vector2 position, Texture2D spriteAtlas)
         {
-            this.Body = new CircleBody(128, position);
-            this.updateAction = gameTime => { return; };
+            this.body = new CircleBody(128, position);
+            this.updateAction = deltaTime => { return; };
             this.color = Color.Green;
             this.spriteRect = new Rectangle(0,0, 256,256);
             this.spriteAtlas = spriteAtlas;
@@ -36,18 +41,18 @@ namespace Joulurauhaa2020
         {
             spriteBatch.Draw(
                 this.spriteAtlas,
-                this.Body.position,
+                this.body.position,
                 new Rectangle(257,0, 256,256),// spriteRect,
                 Color.White,
                 0f,// angle,
                 spriteOrigin,
-                this.Body.radius/128, //scale
+                this.body.radius/128, //scale
                 SpriteEffects.None,
                 0
             ); 
             spriteBatch.Draw(
                 this.spriteAtlas,
-                this.Body.position,
+                this.body.position,
                 new Rectangle(0,0, 256,256),// spriteRect,
                 this.color,
                 this.angle,
@@ -60,20 +65,22 @@ namespace Joulurauhaa2020
 
         public void ResolveIfColliding(ICollidable target)
         { 
-            if (!this.Body.isActive) 
+            if (!this.body.isActive) 
                 return;
 
             switch (target)
             {
             case Santa santa:
-                if (this.Body.Colliding(santa.Body))
+                if (this.body.Colliding(santa.body))
                 {
                     //System.Console.WriteLine("Elf collision to Santa");
                     this.color = Color.LightGreen;
 
                     // Do not check for collisions when attached to santa
-                    this.Body.isActive = false;
-                    this.updateAction = CreateAttach(santa, this.Body.position);
+                    this.body.isActive = false;
+                    // TODO difference between "X as I" and "(I)X" ???
+                    //santa.projectiles.Push(this);
+                    this.updateAction = CreateAttach(santa, this.body.position);
                 }
                 else
                 {
@@ -92,24 +99,33 @@ namespace Joulurauhaa2020
             };
         }
 
-        public void Update(GameTime gameTime)
+        public void Update(float deltaTime)
         {
-            this.updateAction(gameTime);
+            this.updateAction(deltaTime);
         }
 
         /// <summary>
         /// Create an action that updates elf's position according to collPos
         /// so that the elf seems to be attached to santa
         /// </summary>
-        private Action<GameTime> CreateAttach(Santa santa, Vector2 collPos)
+        private Action<float> CreateAttach(Santa santa, Vector2 collPos)
         {
-            var v = Vector2.Normalize(this.Body.position - santa.Body.position);
-            v *= santa.Body.radius;
-            return (gameTime) => {
-                //Console.WriteLine($"Elf attached at {santa.Body.position + v}");
+            var v = Vector2.Normalize(this.body.position - santa.body.position);
+            v *= santa.body.radius;
+            return (deltaTime) => {
+                //Console.WriteLine($"Elf attached at {santa.body.position + v}");
                 // TODO Attach to santa where first collided with correct angle
                 // something change to santa's basis something matrix transform
-                this.Body.position = santa.Body.position + v;
+                this.body.position = santa.body.position + v;
+            };
+        }
+
+        public void SetDefaultUpdate()
+        {
+            this.updateAction = (deltaTime) => 
+            {
+                this.body.position += this.direction * deltaTime;
+
             };
         }
     }

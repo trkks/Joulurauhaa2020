@@ -15,6 +15,14 @@ namespace Joulurauhaa2020
 
     interface IUpdatable
     {
-        void Update(GameTime gameTime);
+        void Update(float deltaTime);
+    }
+
+    public interface IProjectile
+    {
+        bool Flying { get; set; }
+        float Angle { get; set; } // For spinning while flying
+        float Speed { get; set; }
+        Vector2 Direction { get; set; }
     }
 }

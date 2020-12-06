@@ -55,7 +55,8 @@ namespace Joulurauhaa2020
             screenHeight = device.PresentationParameters.BackBufferHeight;
 
             player = new Santa(playerStartPosition, 
-                Content.Load<Texture2D>("white_square_and_circle")
+                Content.Load<Texture2D>("santa_atlas")
+                //Content.Load<Texture2D>("white_square_and_circle")
             );
 
             elves = new List<Elf>(100);
@@ -102,11 +103,11 @@ namespace Joulurauhaa2020
             // Handle UI-specific controls
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
-
+            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
             // Update all updatables
             foreach (IUpdatable updatable in updatables)
             {
-                updatable.Update(gameTime);
+                updatable.Update(deltaTime);
             }
 
             // Check collisions between all collidables
