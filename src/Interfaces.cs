@@ -8,19 +8,18 @@ namespace Joulurauhaa2020
         void ResolveIfColliding(ICollidable target);
     }
     
-    interface IDrawable
+    public interface IDrawable
     {
         void Draw(SpriteBatch spriteBatch);
     }
 
-    interface IUpdatable
+    public interface IUpdatable
     {
         void Update(float deltaTime);
     }
 
-    public interface IProjectile
+    public interface IProjectile : IUpdatable, IDrawable, ICollidable
     {
-        bool Flying { get; set; }
         float Angle { get; set; } // For spinning while flying
         float Speed { get; set; }
         Vector2 Direction { get; set; }

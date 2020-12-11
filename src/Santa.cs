@@ -8,8 +8,6 @@ namespace Joulurauhaa2020
 {
     public class Santa : ICollidable, IDrawable, IUpdatable
     {
-        // TODO bunch these fields up into classes for composition
-        // position and collisions -> Collisionbody
         // NOTE avoid too much indirection eg.
         // CheckCollision() -> Santa -> Circle -> body -> Circle ...
         public bool alive;
@@ -23,10 +21,11 @@ namespace Joulurauhaa2020
 
         public Santa(Vector2 position, Texture2D spriteAtlas)
         {
-            this.body = new CircleBody(256, position);
+            this.body = new CircleBody(64, position);
             this.animation = new AnimatedTexture2D(spriteAtlas, 
-                new Point(64,64), new Vector2(20,32),
+                new Point(128,128), new Vector2(40,64),
                 new uint[5] { 2, 4, 10, 2, 5 });
+                //, Color.White, 2f);
             this.projectiles = new Stack<IProjectile>(13); //max_elves+bottle
 
             this.speed = 300;
@@ -36,6 +35,11 @@ namespace Joulurauhaa2020
         {
             this.animation.Draw(spriteBatch, this.body.position, 
                 this.body.angle);
+
+            foreach (IProjectile projectile in projectiles)
+            {
+                projectile.Draw(spriteBatch);
+            }
 
             // NOTE debug shapes:
             //spriteBatch.Draw(
@@ -79,7 +83,8 @@ namespace Joulurauhaa2020
                     break;
 
                 case Wall wall:
-                    //System.Console.WriteLine("Santa collision to Wall");
+                    //if (this.body.Colliding(wall.body))
+                    //    System.Console.WriteLine("Santa collision to Wall");
                     break;
 
                 default:
@@ -100,6 +105,20 @@ namespace Joulurauhaa2020
             //this.direction = Vector2.Normalize(this.direction);
             // Change position according to game time
             this.body.position += (this.direction * this.speed) * deltaTime;
+
+            // TODO How to handle collisions between these projectiles and 
+            // other gameobjects? Move projectiles to GameJR2020-scope from
+            // a (ref List<IProjectile> projectiles) ?:
+            // Update(gt):
+            //   player.Update(ref projectiles)
+            // ...
+            // player.Update(pjs):
+            //   if MouseRight.Pressed:
+            //     pjs.Add(new Projectile(position,dir,speed))
+            foreach (IProjectile projectile in projectiles)
+            {
+                projectile.Update(deltaTime);
+            }               
         }
 
         private void ProcessInput()

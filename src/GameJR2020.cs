@@ -19,6 +19,9 @@ namespace Joulurauhaa2020
         private static Random random = new Random();
         private static Vector2 playerStartPosition = new Vector2(400, 400);
 
+        // "Cosmetic" objects
+        private Texture2D floorTexture;
+
         // Gameobjects
         private List<Elf> elves;
         private Wall[] walls;
@@ -38,8 +41,8 @@ namespace Joulurauhaa2020
         protected override void Initialize()
         {
             // Backbuffer contains what will be drawn to screen
-            graphics.PreferredBackBufferWidth = 1200;
-            graphics.PreferredBackBufferHeight = 750;
+            graphics.PreferredBackBufferWidth = 800;
+            graphics.PreferredBackBufferHeight = 640;
             graphics.IsFullScreen = false;
             graphics.ApplyChanges();
             Window.Title = "Joulurauhaa2020";
@@ -48,12 +51,16 @@ namespace Joulurauhaa2020
 
         protected override void LoadContent()
         {
+            // General fields
             spriteBatch = new SpriteBatch(GraphicsDevice);
             device = graphics.GraphicsDevice;
-
             screenWidth = device.PresentationParameters.BackBufferWidth;
             screenHeight = device.PresentationParameters.BackBufferHeight;
 
+            // Visuals
+            floorTexture = Content.Load<Texture2D>("floor");
+
+            // Game objects
             player = new Santa(playerStartPosition, 
                 Content.Load<Texture2D>("santa_atlas")
                 //Content.Load<Texture2D>("white_square_and_circle")
@@ -74,11 +81,46 @@ namespace Joulurauhaa2020
             }
 
             var wallTexture = Content.Load<Texture2D>("debug_white_square");//wall");
+            // TODO Enum maybe not needed for collision-direction; check the
+            // rectangle algorithm
+            float wallThickness = 10f;
             walls = new Wall[] {
-                new Wall(Wall.Edge.Left),
-                new Wall(Wall.Edge.Right),
-                new Wall(Wall.Edge.Top),
-                new Wall(Wall.Edge.Bottom)
+                new Wall( // Left
+                    wallTexture,
+                    new Vector2(wallThickness, (float)screenHeight),
+                    Vector2.UnitX,
+                    new Vector2(
+                        0, // TODO adjust to wall thickness
+                        0//(float)screenHeight/2f
+                    )
+                ),
+                new Wall( // Right
+                    wallTexture,
+                    new Vector2(wallThickness, (float)screenHeight),
+                    -Vector2.UnitX,
+                    new Vector2(
+                        (float)screenWidth-wallThickness, // TODO adjust to wall thickness
+                        0//(float)screenHeight/2f
+                    )
+                ),
+                new Wall( // Top
+                    wallTexture,
+                    new Vector2((float)screenWidth, wallThickness),
+                    Vector2.UnitY,
+                    new Vector2(
+                        0,//(float)screenWidth/2f, 
+                        0
+                    )
+                ),
+                new Wall( // Bottom
+                    wallTexture,
+                    new Vector2((float)screenWidth, wallThickness),
+                    -Vector2.UnitY,
+                    new Vector2(
+                        0,//(float)screenWidth/2f,
+                        (float)screenHeight-wallThickness
+                    )
+                )
             };
 
             // Simplify updates by adding into generic collections
@@ -103,6 +145,7 @@ namespace Joulurauhaa2020
             // Handle UI-specific controls
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
+
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
             // Update all updatables
             foreach (IUpdatable updatable in updatables)
@@ -132,10 +175,26 @@ namespace Joulurauhaa2020
 
             spriteBatch.Begin();
             
+            spriteBatch.Draw(
+                floorTexture,
+                Vector2.Zero,
+                null,
+                Color.White,
+                0f,
+                Vector2.Zero,
+                1f,
+                SpriteEffects.None,
+                0
+            );
+
             foreach (IDrawable drawable in drawables)
             {
                 drawable.Draw(spriteBatch);
             }
+
+            //spriteBatch.Draw(
+            //    wallTextures,
+            //);
 
             spriteBatch.End();
 

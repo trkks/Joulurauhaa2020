@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Joulurauhaa2020
 {
-    public class Elf : ICollidable, IDrawable, IUpdatable
+    public class Elf : IProjectile, ICollidable, IDrawable, IUpdatable
     {
         public bool alive;
         public float speed;
@@ -17,11 +17,30 @@ namespace Joulurauhaa2020
         public Vector2 direction;
         public Vector2 spriteOrigin;
 
+        public float Angle 
+        { 
+            get => body.angle; 
+            set => body.angle = value;
+        }
+
+        public float Speed 
+        {
+            get => speed;
+            set => speed = value;
+        }
+
+        public Vector2 Direction 
+        {
+            get => direction;
+            set => direction = value;
+        }
+
+
         public Elf(Vector2 position, Texture2D spriteAtlas)
         {
             this.body = new CircleBody(128, position);
             this.animation = new AnimatedTexture2D(spriteAtlas, 
-                new Point(16,16), new Vector2(8,8),
+                new Point(32,32), new Vector2(16,16),
                 new uint[4] { 5, 3, 5, 3 });
             this.updateAction = deltaTime => { return; };
             // Start animation
@@ -83,6 +102,10 @@ namespace Joulurauhaa2020
                 }
                 break;
 
+            case Elf elf:
+                // simple reflect? how does this affect different updateactions?
+                break;
+
             case Wall wall:
                 /* do nothing */
                 break;
@@ -105,13 +128,17 @@ namespace Joulurauhaa2020
         /// </summary>
         private Action<float> CreateAttach(Santa santa, Vector2 collPos)
         {
-            var v = Vector2.Normalize(this.body.position - santa.body.position);
-            v *= santa.body.radius;
+            Vector2 towardsSanta = Vector2.Normalize(
+                santa.body.position - this.body.position);
+            Vector2 santaOffset = -towardsSanta * santa.body.radius;
+
+            this.body.angle = (float)Math.Atan2(towardsSanta.Y, towardsSanta.X);
+
             return (deltaTime) => {
                 //Console.WriteLine($"Elf attached at {santa.body.position + v}");
                 // TODO Attach to santa where first collided with correct angle
                 // something change to santa's basis something matrix transform
-                this.body.position = santa.body.position + v;
+                this.body.position = santa.body.position + santaOffset;
             };
         }
 

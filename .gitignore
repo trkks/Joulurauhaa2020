@@ -5,4 +5,6 @@ obj
 Content/bin
 Content/obj
 *.png
+*.bmp
+*.mgcb
 debug_*

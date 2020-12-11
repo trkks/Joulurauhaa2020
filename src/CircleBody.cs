@@ -30,7 +30,35 @@ namespace Joulurauhaa2020
         public bool Colliding(RectangleBody target)
         {
             // Do a rough estimate of collision by bounding circle and rectangle
-            return false; //TODO Circle X Rectangle
+        
+            // Check for closest rectangle edge to circle
+            // FIXME where's equality checked?
+            float testX = position.X;
+            float testY = position.Y;
+            if (position.X < target.position.X) // Left
+            {
+                testX = position.X;
+            }
+            else if (position.X > target.position.X+target.dimensions.X) // Right
+            {
+                testX = target.position.X+target.dimensions.X;
+            }
+
+            if (position.Y < target.position.Y) // Top
+            {
+                testY = target.position.Y;
+            }
+            else if (position.Y > target.position.Y+target.dimensions.Y) // Bottom
+            {
+                testY = target.position.Y+target.dimensions.Y;
+            }
+
+            // Collision-check
+            var testVector = new Vector2(testX, testY);
+            float distance = (position-testVector).Length();
+
+            return distance <= radius;
+
             // TODO if (true) do texture-level (pixel) collision detection
         } 
     }
