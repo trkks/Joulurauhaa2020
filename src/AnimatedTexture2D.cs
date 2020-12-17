@@ -9,8 +9,8 @@ namespace Joulurauhaa2020
     public class AnimatedTexture2D
     {
         public Color color;
+        public bool animating;
 
-        private bool animating;
         private bool playingOnce;
         private float scale;
         private int frameIndex;
@@ -34,11 +34,8 @@ namespace Joulurauhaa2020
             this.frameTime = 0;
             this.frames = new (Rectangle, uint)[timings.Length];
             this.playingOnce = false;
-            //Console.WriteLine($"Atlas bounds: {spriteAtlas.Bounds}");
             Utilities.PopulateAnimation(spriteSize, spriteAtlas.Bounds.Size,
                 timings, ref this.frames);
-            //foreach (var (r,t) in frames)
-            //    Console.WriteLine($"{r} : {t}");
         }
 
         // TODO Add GameTime as a parameter and take it into consideration?
@@ -58,9 +55,6 @@ namespace Joulurauhaa2020
 
             if (animating)
             {
-                //Console.WriteLine($"{this}: frameIndex = {frameIndex}, "+
-                //                  $"frameTime = {frameTime}, "+
-                //                  $"time set to this frame = {frames[frameIndex].Item2}");
                 // Decide what to draw next time
                 frameTime++;
                 if (frameTime >= frames[frameIndex].Item2)

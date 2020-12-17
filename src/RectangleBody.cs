@@ -18,7 +18,6 @@ namespace Joulurauhaa2020
         {
             // Do a rough estimate of collision by bounding rectangle and circle
             // Check for closest rectangle edge to circle
-            // FIXME where's equality checked?
             float testX = target.position.X;
             float testY = target.position.Y;
             if (target.position.X < position.X) // Left
@@ -51,10 +50,10 @@ namespace Joulurauhaa2020
         public bool Colliding(RectangleBody target)
         {
             // Do a rough estimate of collision by bounding rectangles
-            return this.position.X + this.dimensions.X >= target.position.X &&
-                   this.position.Y + this.dimensions.Y >= target.position.Y &&
-                   this.position.X <= target.position.X + target.dimensions.X &&
-                   this.position.Y <= target.position.Y + target.dimensions.Y; 
+            return position.X + dimensions.X >= target.position.X &&
+                   position.Y + dimensions.Y >= target.position.Y &&
+                   position.X <= target.position.X + target.dimensions.X &&
+                   position.Y <= target.position.Y + target.dimensions.Y; 
             // TODO if (true) do texture-level (pixel) collision detection
         } 
     }
