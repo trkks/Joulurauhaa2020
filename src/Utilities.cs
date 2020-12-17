@@ -11,7 +11,7 @@ namespace Joulurauhaa2020
         /* Populate the animation frames with rectangles and timings */
         public static void PopulateAnimation(Point spriteSize, 
             Point atlasSize, uint[] timings,
-            ref (Rectangle, uint)[] targetCollection)
+            (Rectangle, uint)[] targetCollection)
         {
             var atlasMask = new Rectangle(Point.Zero, spriteSize);
             for (int i = 0; i < timings.Length; i++)
@@ -54,5 +54,31 @@ namespace Joulurauhaa2020
                 }
             }
         }
+
+        /* Helpers for checking collisions */
+
+        public static bool Colliding(CircleBody[] cbs, CircleBody cb)
+        {
+            foreach (CircleBody cbi in cbs)
+            {
+                if (cbi.Colliding(cb))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }    
+
+        public static bool Colliding(CircleBody[] cbs, RectangleBody rb)
+        {
+            foreach (CircleBody cb in cbs)
+            {
+                if (cb.Colliding(rb))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }    
     }
 }

@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Joulurauhaa2020
 {
-    public class Wall : ICollidable, IDrawable
+    public class Wall
     {
         public float angle;
 
@@ -20,15 +20,14 @@ namespace Joulurauhaa2020
         public Wall(Texture2D sprite, Vector2 dimensions, Vector2 direction,
             Vector2 position)
         { 
-            this.sprite = sprite;
-            this.direction = direction;
-
-            this.origin = dimensions / 2f; // Origin always dead center
             this.angle = (float)Math.Atan2(direction.Y, direction.X);
             this.body = new RectangleBody(dimensions, position);
-
-            this.dimensions = dimensions.ToPoint();
             this.color = Color.White;
+            this.dimensions = dimensions.ToPoint();
+            this.direction = direction;
+            this.origin = dimensions / 2f; // Origin always dead center
+            this.sprite = sprite;
+
         }
 
         public List<Dot> dots = new List<Dot>(100);
@@ -40,7 +39,7 @@ namespace Joulurauhaa2020
             spriteBatch.Draw(
                 sprite,
                 body.position,
-                new Rectangle(Point.Zero,dimensions),
+                null,
                 color,
                 angle,
                 origin,
@@ -52,30 +51,18 @@ namespace Joulurauhaa2020
                 dot.Draw(spriteBatch);
         }
 
-        public void ResolveIfColliding(ICollidable target)
-        { 
-            switch (target)
+        public void PushAway(CircleBody target)
+        {
+            while (body.Colliding(target))
             {
-                case Santa santa:
-                    while (body.Colliding(santa.body))
-                    {
-                        dots.Add(new Dot(
-                            sprite, 
-                            body.position)
-                        );
-                    
-                        dots.Add(new Dot(
-                            sprite, 
-                            santa.body.position)
-                        );    // Push away from wall
-                        santa.body.position += direction;
-                    }
-                    break;
-                case Wall _:
-                    // No response
-                    break;
-             }
-            /* static - no response */ }
+                dots.Add(new Dot(
+                    sprite, 
+                    target.position)
+                );    
+                // Push away from wall
+                target.position += direction;
+            }
+        }
 
         public void Update(float deltaTime)
         { /* static - no action */ }

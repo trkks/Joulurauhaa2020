@@ -24,12 +24,9 @@ namespace Joulurauhaa2020
 
         // Gameobjects
         private List<Elf> elves;
-        private Wall[] walls;
         private Santa player;
-
-        private List<ICollidable> collidables;
-        private List<IDrawable> drawables;
-        private List<IUpdatable> updatables;
+        private List<Projectile> projectiles;
+        private Wall[] walls;
 
         public GameJR2020()
         {
@@ -42,7 +39,7 @@ namespace Joulurauhaa2020
         {
             // Backbuffer contains what will be drawn to screen
             graphics.PreferredBackBufferWidth = 800;
-            graphics.PreferredBackBufferHeight = 640;
+            graphics.PreferredBackBufferHeight = 600;
             graphics.IsFullScreen = false;
             graphics.ApplyChanges();
             Window.Title = "Joulurauhaa2020";
@@ -51,23 +48,23 @@ namespace Joulurauhaa2020
 
         protected override void LoadContent()
         {
-            // General fields
+            // General fields:
             spriteBatch = new SpriteBatch(GraphicsDevice);
             device = graphics.GraphicsDevice;
             screenWidth = device.PresentationParameters.BackBufferWidth;
             screenHeight = device.PresentationParameters.BackBufferHeight;
 
-            // Visuals
+            // Global visuals:
             floorTexture = Content.Load<Texture2D>("floor");
 
-            // Game objects
+            // Game objects:
             player = new Santa(playerStartPosition, 
                 Content.Load<Texture2D>("santa_atlas")
-                //Content.Load<Texture2D>("white_square_and_circle")
             );
 
             elves = new List<Elf>(100);
 
+            Texture2D elfTexture = Content.Load<Texture2D>("elf_atlas");
             for (int i = 0; i < 10; ++i)
             {
                 var elfPosition = new Vector2(
@@ -75,97 +72,141 @@ namespace Joulurauhaa2020
                     (float)random.NextDouble() * (float)screenHeight
                 );
 
-                elves.Add(new Elf(elfPosition,
-                        Content.Load<Texture2D>("elf_atlas"))
-                );
+                elves.Add(new Elf(elfPosition, elfTexture));
             }
 
-            var wallTexture = Content.Load<Texture2D>("debug_white_square");//wall");
-            // TODO Enum maybe not needed for collision-direction; check the
-            // rectangle algorithm
+            var wallHorizontal = Content.Load<Texture2D>("wall_horizontal");
+            var wallVertical = Content.Load<Texture2D>("wall_vertical");
+
             float wallThickness = 10f;
             walls = new Wall[] {
                 new Wall( // Left
-                    wallTexture,
+                    wallVertical,
                     new Vector2(wallThickness, (float)screenHeight),
                     Vector2.UnitX,
-                    new Vector2(
-                        0, // TODO adjust to wall thickness
-                        0//(float)screenHeight/2f
-                    )
+                    Vector2.Zero
                 ),
                 new Wall( // Right
-                    wallTexture,
+                    wallVertical,
                     new Vector2(wallThickness, (float)screenHeight),
                     -Vector2.UnitX,
-                    new Vector2(
-                        (float)screenWidth-wallThickness, // TODO adjust to wall thickness
-                        0//(float)screenHeight/2f
-                    )
+                    new Vector2((float)screenWidth-wallThickness, 0)
                 ),
                 new Wall( // Top
-                    wallTexture,
+                    wallHorizontal,
                     new Vector2((float)screenWidth, wallThickness),
                     Vector2.UnitY,
-                    new Vector2(
-                        0,//(float)screenWidth/2f, 
-                        0
-                    )
+                    Vector2.Zero
                 ),
                 new Wall( // Bottom
-                    wallTexture,
+                    wallHorizontal,
                     new Vector2((float)screenWidth, wallThickness),
                     -Vector2.UnitY,
-                    new Vector2(
-                        0,//(float)screenWidth/2f,
-                        (float)screenHeight-wallThickness
-                    )
+                    new Vector2(0, (float)screenHeight-wallThickness)
                 )
             };
 
-            // Simplify updates by adding into generic collections
-            
-            collidables = new List<ICollidable>(105);
-            collidables.Add(player);
-            collidables.AddRange(elves);
-            collidables.AddRange(walls);
-
-            drawables = new List<IDrawable>(105);
-            drawables.Add(player);
-            drawables.AddRange(elves);
-            drawables.AddRange(walls);
-
-            updatables = new List<IUpdatable>(101);
-            updatables.Add(player);
-            updatables.AddRange(elves);
+            projectiles = new List<Projectile>(32);
         }
 
         protected override void Update(GameTime gameTime)
         {
             // Handle UI-specific controls
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+            if (Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-            // Update all updatables
-            foreach (IUpdatable updatable in updatables)
+
+            // Update all updatables:
+
+            player.Update(deltaTime, projectiles);
+
+            foreach (Projectile projectile in projectiles)
             {
-                updatable.Update(deltaTime);
+                projectile.Update(deltaTime);
             }
 
-            // Check collisions between all collidables
-            // O(n^2)
-            foreach (ICollidable collidable in collidables)
+            // Elves' update depends on player, so they're updated after
+            foreach (Elf elf in elves)
             {
-                foreach (ICollidable target in collidables)
+                elf.Update(deltaTime, player);
+            }
+
+            // Handle collisions between collidables
+            foreach (Elf elf in elves)
+            {
+                foreach (Elf elf2 in elves)
                 {
-                    if (collidable != target)
+                    if (elf != elf2 && elf.body.Colliding(elf2.body))
                     {
-                        collidable.ResolveIfColliding(target);
+                        Collisions.Handle(elf, elf2);
+                    }
+                }
+
+                if (elf.body.Colliding(player.body))
+                {
+                    Collisions.Handle(player, elf);
+                }
+
+                foreach (Wall wall in walls)
+                {
+                    if (elf.body.Colliding(wall.body))
+                    {
+                        Collisions.Handle(elf, wall);
                     }
                 }
             }
-           
+
+            foreach (Projectile projectile in projectiles)
+            {
+                foreach (Elf elf in elves)
+                {
+                    if (projectile.body.Colliding(elf.body))
+                    {
+                        Collisions.Handle(elf, projectile);
+                    }
+                }
+                //if (projectile.body.Colliding(player.body))
+                //{
+                //    Collisions.Handle(player, projectile);
+                //}
+                //foreach (Projectile projectile2 in projectiles)
+                //{
+                //    if (projectile != projectile2 && 
+                //        projectile.body.Colliding(projectile2.body))
+                //    {
+                //        Collisions.Handle(projectile, projectile2);
+                //    }
+                //}
+            }
+
+            foreach (Wall wall in walls)
+            {
+                if (wall.body.Colliding(player.body))
+                {
+                    Collisions.Handle(player, wall);
+                }
+                foreach (Projectile projectile in projectiles)
+                {
+                    if (wall.body.Colliding(projectile.body))
+                    {
+                        Collisions.Handle(projectile, wall);
+                    }
+                }
+            }
+
+            // TODO Do not just remove, but change actions
+            // Remove elves "picked up" by player on last update 
+            elves.RemoveAll(elf => !elf.alive);
+            // .. and the same for projectiles
+            projectiles.RemoveAll(projectile => !projectile.flying);
+
+            // Check for gameover
+            if (!player.alive)
+            {
+                GameOver();
+            }
+
             base.Update(gameTime);
         }
 
@@ -174,6 +215,9 @@ namespace Joulurauhaa2020
             GraphicsDevice.Clear(Color.Black);
 
             spriteBatch.Begin();
+
+
+            //Draw in layered order, bottom first:
             
             spriteBatch.Draw(
                 floorTexture,
@@ -187,18 +231,33 @@ namespace Joulurauhaa2020
                 0
             );
 
-            foreach (IDrawable drawable in drawables)
+            player.Draw(spriteBatch);
+
+            foreach (Elf elf in elves)
             {
-                drawable.Draw(spriteBatch);
+                elf.Draw(spriteBatch);
             }
 
-            //spriteBatch.Draw(
-            //    wallTextures,
-            //);
+            foreach (Projectile projectile in projectiles)
+            {
+                projectile.Draw(spriteBatch);
+            }
+
+            foreach (Wall wall in walls)
+            {
+                wall.Draw(spriteBatch);
+            }
 
             spriteBatch.End();
 
             base.Draw(gameTime);
+        }
+
+
+        private void GameOver()
+        {
+            //TODO
+            Console.WriteLine("Game over.");
         }
     }
 }

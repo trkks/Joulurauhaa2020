@@ -34,8 +34,9 @@ namespace Joulurauhaa2020
             this.frameTime = 0;
             this.frames = new (Rectangle, uint)[timings.Length];
             this.playingOnce = false;
+
             Utilities.PopulateAnimation(spriteSize, spriteAtlas.Bounds.Size,
-                timings, ref this.frames);
+                timings, this.frames);
         }
 
         // TODO Add GameTime as a parameter and take it into consideration?

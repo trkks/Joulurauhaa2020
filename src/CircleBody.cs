@@ -5,7 +5,6 @@ namespace Joulurauhaa2020
 {
     public class CircleBody
     {
-        public bool isActive;
         public float radius;
         public Vector2 position;
 
@@ -16,7 +15,6 @@ namespace Joulurauhaa2020
         /// <param name="position"></param>
         public CircleBody(float squareW, Vector2 position)
         {
-            this.isActive = true;
             // Calculate the maximum radius for a circle in given square
             // ie. let v = Vec2(squareW)
             // radius = Cos( PI / 4 ) * Abs( 1/2 * v )
