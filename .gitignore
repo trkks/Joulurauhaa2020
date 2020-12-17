@@ -6,5 +6,5 @@ Content/bin
 Content/obj
 *.png
 *.bmp
-*.mgcb
+Content/Content.mgcb
 debug_*
