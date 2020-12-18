@@ -8,8 +8,9 @@ namespace Joulurauhaa2020
 {
     public class AnimatedTexture2D
     {
-        public Color color;
         public bool animating;
+        public float layer;
+        public Color color;
 
         private bool playingOnce;
         private float scale;
@@ -22,7 +23,8 @@ namespace Joulurauhaa2020
 
         public AnimatedTexture2D(Texture2D spriteAtlas, Point spriteSize,
                                  Vector2 origin, uint[] timings,
-                                 Color? color=null, float scale=1f)
+                                 float layer=1f, float scale=1f, 
+                                 Color? color=null)
         {
             this.color = color ?? Color.White;
             this.scale = scale;
@@ -33,6 +35,7 @@ namespace Joulurauhaa2020
             this.frameIndex = 0;
             this.frameTime = 0;
             this.frames = new (Rectangle, uint)[timings.Length];
+            this.layer = layer;
             this.playingOnce = false;
 
             Utilities.PopulateAnimation(spriteSize, spriteAtlas.Bounds.Size,
@@ -40,7 +43,8 @@ namespace Joulurauhaa2020
         }
 
         // TODO Add GameTime as a parameter and take it into consideration?
-        public void Draw(SpriteBatch spriteBatch, Vector2 position, float angle)
+        public void Draw(SpriteBatch spriteBatch, Vector2 position,
+                         float angle)
         {
             spriteBatch.Draw(
                 spriteAtlas,
@@ -51,7 +55,7 @@ namespace Joulurauhaa2020
                 spriteOrigin,
                 scale,
                 SpriteEffects.None,
-                0
+                layer
             );            
 
             if (animating)

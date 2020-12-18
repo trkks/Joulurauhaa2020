@@ -3,18 +3,29 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Joulurauhaa2020
 {
+    // Tag for differentiating between collisions reactions etc
+    public enum Tag
+    {
+        Elf,
+        Bottle
+    }
+
     public class Projectile
     {
         public bool bounced; 
         public bool flying; 
         public float angle; 
         public float speed;
+        public Tag tag;
         public AnimatedTexture2D animation;
         public CircleBody body; // Object spinning in air -> use circles
         public Vector2 direction;
 
+        private const float bounceMultiplier = 1.5f;
+        private float slowdown = 10f;
+
         public Projectile(AnimatedTexture2D animation, CircleBody body, 
-                          float speed)
+                          float speed, Tag tag)
         {
             this.bounced = false;
             this.flying = false;
@@ -23,6 +34,9 @@ namespace Joulurauhaa2020
             this.animation = animation;
             this.body = body;
             this.direction = Vector2.Zero;
+            this.tag = tag;
+
+            this.animation.layer = 0.8f;
         }
 
         public void Draw(SpriteBatch spriteBatch)
@@ -40,6 +54,9 @@ namespace Joulurauhaa2020
         public void Break()
         {
             flying = false;
+            animation.animating = false;
+            animation.color = GameJR2020.colorOfDeath;
+            animation.layer = 0.25f;
             //TODO Play breaking animation & darken color
         }
 
@@ -51,18 +68,21 @@ namespace Joulurauhaa2020
 
         public void Update(float deltaTime)
         {
-            if (bounced)
+            if (flying)
             {
-                // Slow down until stopped
-                speed -= 40; 
+                if (bounced)
+                {
+                    slowdown *= bounceMultiplier; 
+                }
+                speed -= slowdown;
                 if (speed <= 0)
                 {
                     Break();
                 }
-            }
-            if (flying)
-            {
-                body.position += direction * speed * deltaTime;
+                else
+                {
+                    body.position += direction * speed * deltaTime;
+                }
                 angle += 0.2f;
             }
         }

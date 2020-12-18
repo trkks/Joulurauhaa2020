@@ -9,13 +9,15 @@ namespace Joulurauhaa2020
     public class Santa
     {
         public bool alive;
+        public float speed;
+        public int meleeDamage;
         public AnimatedTexture2D animation;
         public CircleBody body;
+        public CircleBody melee;
 
         private bool mLeftReleased;
         private bool mRightReleased;
         private float angle;
-        private float speed;
         private Stack<Projectile> hangingElves;
         private Vector2 direction;
 
@@ -25,11 +27,17 @@ namespace Joulurauhaa2020
             this.angle = 0;
             this.animation = new AnimatedTexture2D(spriteAtlas, 
                 new Point(128,128), new Vector2(40,64),
-                new uint[5] { 2, 4, 10, 2, 5 });
+                new uint[5] { 2, 4, 10, 2, 5 }, 0.75f);
                 //, Color.White, 2f);
             this.body = new CircleBody(40, position);
             this.hangingElves = new Stack<Projectile>(8); //MAX_ELVES);
+            //TODO This needs to be huge... its weird
+            // also timer-callbacks are guessed rn??
+            this.melee = new CircleBody(90, position);
+            this.meleeDamage = 2;
             this.speed = 300;
+
+            this.melee.active = false;
         }
 
         public void AddProjectile(Projectile projectile)
@@ -54,11 +62,25 @@ namespace Joulurauhaa2020
             }
         }
 
-        private void ExecuteHit(Vector2 towards)
+        private void ExecuteHit()
         {
             // Play animation
             // Spawn a hitbox for the hit at correct animation frame
             // Remove hitbox at correct animation frame
+            Console.WriteLine("Santa be swinging");
+
+            var callbackStart = new System.Timers.Timer(6); // 6. frame
+            callbackStart.AutoReset = false;
+            callbackStart.Elapsed += (s,e) => {Console.WriteLine("Swing started"); lock(melee) {melee.active = true;}}; 
+            var callbackEnd = new System.Timers.Timer(15); // 15. frame
+            callbackEnd.AutoReset = false;
+            callbackEnd.Elapsed += (s,e) => {Console.WriteLine("Swing ended"); lock(melee) {melee.active = false;}};
+
+            animation.PlayOnce();
+            callbackStart.Enabled = true;
+            callbackEnd.Enabled = true;
+            // TODO FramedExecutor.Execute(); 
+            //      == Animation + Action on specific frame
         } 
 
         public void Update(float deltaTime, List<Projectile> projectilesIn)
@@ -80,9 +102,7 @@ namespace Joulurauhaa2020
             /* Mouse 1 */
             if (mState.LeftButton == ButtonState.Pressed && mLeftReleased)
             {
-                Console.WriteLine("Santa be swinging");
-                // TODO ExecuteHit();
-                animation.PlayOnce();
+                ExecuteHit();
             }
             // No holding down
             mLeftReleased = mState.LeftButton == ButtonState.Released;
@@ -133,7 +153,11 @@ namespace Joulurauhaa2020
             //this.direction = Vector2.Normalize(this.direction);
             // Change position according to game time
             body.position += direction * speed * deltaTime;
-    
+   
+            // Position melee to front
+            melee.position = body.position + 
+                (towardsMouse * (body.radius + melee.radius));
+ 
             // Update the elf-projectiles attached to santa
             int hangingIndex = 1;
             foreach (Projectile elf in hangingElves)

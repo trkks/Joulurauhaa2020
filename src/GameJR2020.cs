@@ -3,12 +3,22 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Timers;
 
 namespace Joulurauhaa2020
 {
     public class GameJR2020 : Game
     {
+        // Global static fields
+        public static Color colorOfDeath = new Color(0xa9, 0xa9, 0xa9);
+
+        private static Random random = new Random();
+        private static Vector2 playerStartPosition = new Vector2(400, 400);
+        //private static Timer playtime; //TODO use gametime.TotalGameTime?
+        private static Texture2D elfTexture;
+
         // Primitive fields
+        private int elfSpawnRate = 600;
         private int screenWidth;
         private int screenHeight;
 
@@ -16,8 +26,6 @@ namespace Joulurauhaa2020
         private GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
         private GraphicsDevice device; // "The hardware graphical device"
-        private static Random random = new Random();
-        private static Vector2 playerStartPosition = new Vector2(400, 400);
 
         // "Cosmetic" objects
         private Texture2D floorTexture;
@@ -27,6 +35,7 @@ namespace Joulurauhaa2020
         private Santa player;
         private List<Projectile> projectiles;
         private Wall[] walls;
+        private List<object> deadObjects;
 
         public GameJR2020()
         {
@@ -46,6 +55,19 @@ namespace Joulurauhaa2020
             base.Initialize();
         }
 
+        private void SpawnElf()
+        {
+            // Choose a door
+            // Play the door's animation
+            // Spawn an elf at the door
+            var elfPosition = new Vector2(
+                (float)random.NextDouble() * (float)screenWidth,
+                (float)random.NextDouble() * (float)screenHeight
+            );
+
+            elves.Add(new Elf(elfPosition, elfTexture));
+        }
+
         protected override void LoadContent()
         {
             // General fields:
@@ -53,26 +75,26 @@ namespace Joulurauhaa2020
             device = graphics.GraphicsDevice;
             screenWidth = device.PresentationParameters.BackBufferWidth;
             screenHeight = device.PresentationParameters.BackBufferHeight;
+            //elfSpawner.Elapsed += (s,e) => SpawnElf();
+            //elfSpawner.AutoReset = true;
+            //elfSpawner.Enabled = true;
 
             // Global visuals:
             floorTexture = Content.Load<Texture2D>("floor");
 
             // Game objects:
+            //Texture2D bottleTexture = Content.Load<Texture2D>("bottle");
             player = new Santa(playerStartPosition, 
                 Content.Load<Texture2D>("santa_atlas")
             );
 
-            elves = new List<Elf>(100);
+            elves = new List<Elf>(128);
+            elfTexture = Content.Load<Texture2D>("elf_atlas");
 
-            Texture2D elfTexture = Content.Load<Texture2D>("elf_atlas");
+            // Make some debug elves
             for (int i = 0; i < 10; ++i)
             {
-                var elfPosition = new Vector2(
-                    (float)random.NextDouble() * (float)screenWidth,
-                    (float)random.NextDouble() * (float)screenHeight
-                );
-
-                elves.Add(new Elf(elfPosition, elfTexture));
+                SpawnElf();
             }
 
             var wallHorizontal = Content.Load<Texture2D>("wall_horizontal");
@@ -107,10 +129,18 @@ namespace Joulurauhaa2020
             };
 
             projectiles = new List<Projectile>(32);
+
+            deadObjects = new List<object>(128);
         }
 
         protected override void Update(GameTime gameTime)
         {
+            // Spawn new elves 
+            if (gameTime.TotalGameTime.Milliseconds % elfSpawnRate == 0)
+            {
+                SpawnElf();
+            }
+
             // Handle UI-specific controls
             if (Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
@@ -129,8 +159,14 @@ namespace Joulurauhaa2020
             // Elves' update depends on player, so they're updated after
             foreach (Elf elf in elves)
             {
-                elf.Update(deltaTime, player);
+                if (elf.alive)
+                {
+                    elf.Update(deltaTime, player);
+                }
             }
+
+            // Store elves ready for removal when they collide with player
+            var removableElves = new List<Elf>(8);
 
             // Handle collisions between collidables
             foreach (Elf elf in elves)
@@ -141,11 +177,22 @@ namespace Joulurauhaa2020
                     {
                         Collisions.Handle(elf, elf2);
                     }
+                    else
+                    {
+                        // Reset speed to recover from Elf-to-Elf -collision
+                        elf.ResetSpeed();
+                    }
                 }
 
                 if (elf.body.Colliding(player.body))
                 {
-                    Collisions.Handle(player, elf);
+                    Collisions.Handle(player, elf, removableElves);
+                }
+
+                if (elf.body.Colliding(player.melee))
+                {
+                    Console.WriteLine("Melee hit!!");
+                    Collisions.Handle(player, elf, null);
                 }
 
                 foreach (Wall wall in walls)
@@ -166,18 +213,6 @@ namespace Joulurauhaa2020
                         Collisions.Handle(elf, projectile);
                     }
                 }
-                //if (projectile.body.Colliding(player.body))
-                //{
-                //    Collisions.Handle(player, projectile);
-                //}
-                //foreach (Projectile projectile2 in projectiles)
-                //{
-                //    if (projectile != projectile2 && 
-                //        projectile.body.Colliding(projectile2.body))
-                //    {
-                //        Collisions.Handle(projectile, projectile2);
-                //    }
-                //}
             }
 
             foreach (Wall wall in walls)
@@ -195,11 +230,9 @@ namespace Joulurauhaa2020
                 }
             }
 
-            // TODO Do not just remove, but change actions
-            // Remove elves "picked up" by player on last update 
-            elves.RemoveAll(elf => !elf.alive);
-            // .. and the same for projectiles
-            projectiles.RemoveAll(projectile => !projectile.flying);
+            // Remove elves turned into projectiles from living elves
+            // NOTE this is stupid
+            elves.RemoveAll(elf => removableElves.Contains(elf));
 
             // Check for gameover
             if (!player.alive)
@@ -214,11 +247,10 @@ namespace Joulurauhaa2020
         {
             GraphicsDevice.Clear(Color.Black);
 
-            spriteBatch.Begin();
+            //FIXME Unstable draw-sorting makes dead objects flicker
+            spriteBatch.Begin(SpriteSortMode.FrontToBack);
 
 
-            //Draw in layered order, bottom first:
-            
             spriteBatch.Draw(
                 floorTexture,
                 Vector2.Zero,
@@ -230,13 +262,13 @@ namespace Joulurauhaa2020
                 SpriteEffects.None,
                 0
             );
-
-            player.Draw(spriteBatch);
-
+            
             foreach (Elf elf in elves)
             {
                 elf.Draw(spriteBatch);
             }
+
+            player.Draw(spriteBatch);
 
             foreach (Projectile projectile in projectiles)
             {
@@ -248,11 +280,11 @@ namespace Joulurauhaa2020
                 wall.Draw(spriteBatch);
             }
 
+
             spriteBatch.End();
 
             base.Draw(gameTime);
         }
-
 
         private void GameOver()
         {

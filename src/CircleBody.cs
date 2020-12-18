@@ -5,6 +5,7 @@ namespace Joulurauhaa2020
 {
     public class CircleBody
     {
+        public bool active;
         public float radius;
         public Vector2 position;
 
@@ -15,6 +16,7 @@ namespace Joulurauhaa2020
         /// <param name="position"></param>
         public CircleBody(float squareW, Vector2 position)
         {
+            this.active = true;
             // Calculate the maximum radius for a circle in given square
             // ie. let v = Vec2(squareW)
             // radius = Cos( PI / 4 ) * Abs( 1/2 * v )
@@ -27,6 +29,8 @@ namespace Joulurauhaa2020
 
         public bool Colliding(CircleBody target)
         {
+            if (!active || !target.active) { return false; }
+
             // Do a rough estimate of collision by bounding circles
             return Utilities.CollidingCircles(position, radius,
                 target.position, target.radius);
@@ -35,6 +39,8 @@ namespace Joulurauhaa2020
 
         public bool Colliding(RectangleBody target)
         {
+            if (!active || !target.active) { return false; }
+
             // Do a rough estimate of collision by bounding circle and rectangle
             return Utilities.CollidingRectangleCircle(
                 target.position, target.dimensions, position, radius);

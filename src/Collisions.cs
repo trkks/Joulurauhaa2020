@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 
 namespace Joulurauhaa2020
@@ -7,15 +8,30 @@ namespace Joulurauhaa2020
     /// </summary>
     public static class Collisions
     {
-        public static void Handle(Santa santa, Elf elf)
+        public static void Handle(Santa santa, Elf elf, List<Elf> toBeRemoved)
         {
-            santa.AddProjectile(elf.AsProjectile());
-            elf.Die();
+            if (elf.alive)
+            {
+                if (toBeRemoved == null) // Stupid flag for melee vs pickup
+                {
+                    elf.Hurt(santa.meleeDamage);
+                }
+                else
+                {
+                    santa.AddProjectile(elf.AsProjectile());
+                    // Set elf to be removed because it's attached to player
+                    toBeRemoved.Add(elf);
+                }
+            }
         }
  
         public static void Handle(Santa santa, Projectile projectile)
         {
-            santa.AddProjectile(projectile);
+            if (projectile.flying)
+            {
+                projectile.Bounce(Vector2.Normalize(
+                    projectile.body.position - santa.body.position));
+            }
         }
    
         public static void Handle(Santa santa, Wall wall)
@@ -25,18 +41,49 @@ namespace Joulurauhaa2020
 
         public static void Handle(Elf elf1, Elf elf2)
         {
-            elf1.direction = Vector2.Reflect(
-                elf1.direction, 
-                Vector2.Normalize(elf1.body.position - elf2.body.position));
-            elf2.direction = Vector2.Reflect(
-                elf2.direction, 
-                Vector2.Normalize(elf2.body.position - elf1.body.position));
+            if (elf1.alive && elf2.alive)
+            {
+                // Push away from each other
+                elf1.direction = Vector2.Reflect(
+                    elf1.direction, 
+                    Vector2.Normalize(elf1.body.position - elf2.body.position));
+                elf2.direction = Vector2.Reflect(
+                    elf2.direction, 
+                    Vector2.Normalize(elf2.body.position - elf1.body.position));
+            }
+            else if (elf1.alive && !elf2.alive)
+            {
+                elf1.SlowDown();
+            }
+            else if (!elf1.alive && elf2.alive)
+            {
+                elf2.SlowDown();
+            }
         }
 
         public static void Handle(Elf elf, Projectile projectile)
         {
-            elf.Die(); 
-            projectile.Break();
+            if (elf.alive)
+            {
+                if (projectile.flying)
+                {
+                    projectile.Bounce(Vector2.Normalize(
+                        projectile.body.position - elf.body.position));
+                    elf.Die(); 
+                }
+                else if (projectile.tag == Tag.Elf)
+                {
+                    elf.SlowDown();
+                }
+                else if (projectile.tag == Tag.Bottle)
+                {
+                    // Walking over broken bottle hurts
+                    // NOTE Set to 1 because I can't be arsed to implement
+                    // hitbox timers and such
+                    //elf.health = 1;
+                    elf.Die();
+                }
+            }
         }
 
         public static void Handle(Elf elf, Wall wall)

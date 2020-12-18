@@ -45,7 +45,7 @@ namespace Joulurauhaa2020
                 origin,
                 1f,
                 SpriteEffects.None,
-                0
+                1
             );            
             foreach (Dot dot in dots)
                 dot.Draw(spriteBatch);
