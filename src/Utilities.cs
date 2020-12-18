@@ -80,5 +80,52 @@ namespace Joulurauhaa2020
             }
             return false;
         }    
+
+        public static bool CollidingRectangleCircle(Vector2 rpos, Vector2 rdim,
+                                                    Vector2 cpos, float crad)
+        {
+            // Check for closest rectangle edge to circle
+            float testX = cpos.X;
+            float testY = cpos.Y;
+            if (cpos.X < rpos.X) // Left
+            {
+                testX = rpos.X;
+            }
+            else if (cpos.X > rpos.X+rdim.X) // Right
+            {
+                testX = rpos.X+rdim.X;
+            }
+
+            if (cpos.Y < rpos.Y) // Top
+            {
+                testY = rpos.Y;
+            }
+            else if (cpos.Y > rpos.Y+rdim.Y) // Bottom
+            {
+                testY = rpos.Y+rdim.Y;
+            }
+
+            // Collision-check
+            var testVector = new Vector2(testX, testY);
+            float distance = (cpos-testVector).Length();
+
+            return distance <= crad;
+        }
+
+        public static bool CollidingCircles(Vector2 c1pos, float c1rad, 
+                                            Vector2 c2pos, float c2rad)
+        {
+            return Vector2.Distance(c1pos, c2pos) 
+                <= c1rad + c2rad;
+        }
+
+        public static bool CollidingRectangles(Vector2 r1pos, Vector2 r1dim,
+                                               Vector2 r2pos, Vector2 r2dim)
+        {
+            return r1pos.X + r1dim.X >= r2pos.X &&
+                   r1pos.Y + r1dim.Y >= r2pos.Y &&
+                   r1pos.X <= r2pos.X + r2dim.X &&
+                   r1pos.Y <= r2pos.Y + r2dim.Y; 
+        }
     }
 }
