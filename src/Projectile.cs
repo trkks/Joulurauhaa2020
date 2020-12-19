@@ -16,13 +16,15 @@ namespace Joulurauhaa2020
         public bool flying; 
         public float angle; 
         public float speed;
+        public float originalSpeed;
         public Tag tag;
         public AnimatedTexture2D animation;
         public CircleBody body; // Object spinning in air -> use circles
-        public Vector2 direction;
 
         private const float bounceMultiplier = 1.5f;
-        private float slowdown = 10f;
+        private float slowdown = 100f;
+        private float slowdownMultiplier = 1.2f;
+        private Vector2 direction;
 
         public Projectile(AnimatedTexture2D animation, CircleBody body, 
                           float speed, Tag tag)
@@ -31,6 +33,7 @@ namespace Joulurauhaa2020
             this.flying = false;
             this.angle = 0;
             this.speed = speed;
+            this.originalSpeed = speed;
             this.animation = animation;
             this.body = body;
             this.direction = Vector2.Zero;
@@ -48,6 +51,9 @@ namespace Joulurauhaa2020
         {
             direction = Vector2.Normalize(
                 Vector2.Reflect(direction, normal));
+
+            slowdown *= slowdownMultiplier;
+
             bounced = true;
         }
 
@@ -66,21 +72,32 @@ namespace Joulurauhaa2020
             flying = true;
         }
 
+        public void Reset()
+        {
+            bounced = false;
+            flying = false;
+            speed = originalSpeed;
+
+            animation.layer = 0.8f;
+        }
+
         public void Update(float deltaTime)
         {
             if (flying)
             {
-                if (bounced)
-                {
-                    slowdown *= bounceMultiplier; 
-                }
-                speed -= slowdown;
+                //if (bounced)
+                //{
+                //    slowdown *= bounceMultiplier; 
+                //}
+                // TODO bool SlowDown(float multiplier=1f)
+                speed -= slowdown * deltaTime;
                 if (speed <= 0)
                 {
                     Break();
                 }
                 else
                 {
+                    // TODO Normalizing kills velocity
                     body.position += direction * speed * deltaTime;
                 }
                 angle += 0.2f;

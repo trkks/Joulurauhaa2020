@@ -42,9 +42,11 @@ namespace Joulurauhaa2020
 
         public void AddProjectile(Projectile projectile)
         {
+            projectile.Reset();
             hangingElves.Push(projectile);
             if (hangingElves.Count >= 8) // TODO MAX_ELVES
             {
+                //TODO Die();
                 alive = false;
                 speed = 0;
             }

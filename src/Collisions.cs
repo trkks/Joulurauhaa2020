@@ -29,8 +29,10 @@ namespace Joulurauhaa2020
         {
             if (projectile.flying)
             {
-                projectile.Bounce(Vector2.Normalize(
-                    projectile.body.position - santa.body.position));
+                if (projectile.tag == Tag.Elf && projectile.bounced)
+                {
+                    santa.AddProjectile(projectile);
+                }
             }
         }
    

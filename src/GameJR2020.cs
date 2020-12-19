@@ -213,6 +213,11 @@ namespace Joulurauhaa2020
                         Collisions.Handle(elf, projectile);
                     }
                 }
+
+                if (projectile.body.Colliding(player.body))
+                {
+                    Collisions.Handle(player, projectile);
+                }
             }
 
             foreach (Wall wall in walls)
