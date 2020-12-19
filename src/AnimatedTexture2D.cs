@@ -12,10 +12,16 @@ namespace Joulurauhaa2020
         public float layer;
         public Color color;
 
+        public uint TotalFrameTime 
+        { 
+            get => totalFrameTime;
+        }
+
         private bool playingOnce;
         private float scale;
         private int frameIndex;
         private uint frameTime;
+        private uint totalFrameTime;
 
         private Texture2D spriteAtlas;
         private Vector2 spriteOrigin;
@@ -62,6 +68,7 @@ namespace Joulurauhaa2020
             {
                 // Decide what to draw next time
                 frameTime++;
+                totalFrameTime++;
                 if (frameTime >= frames[frameIndex].Item2)
                 {
                     // Current frame's timing has ended so change to next frame
@@ -78,6 +85,7 @@ namespace Joulurauhaa2020
                             animating = false;
                             playingOnce = false;
                         }
+                        totalFrameTime = 0;
                     }
                     // Reset frameTime
                     frameTime = 0;

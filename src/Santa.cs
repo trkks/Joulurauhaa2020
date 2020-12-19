@@ -17,9 +17,13 @@ namespace Joulurauhaa2020
 
         private bool mLeftReleased;
         private bool mRightReleased;
+        private bool swinging;
         private float angle;
+        private uint swingStart;
+        private uint swingEnd;
         private Stack<Projectile> hangingElves;
         private Vector2 direction;
+        private Vector2 facingDirection;
 
         public Santa(Vector2 position, Texture2D spriteAtlas)
         {
@@ -33,9 +37,11 @@ namespace Joulurauhaa2020
             this.hangingElves = new Stack<Projectile>(8); //MAX_ELVES);
             //TODO This needs to be huge... its weird
             // also timer-callbacks are guessed rn??
-            this.melee = new CircleBody(90, position);
+            this.melee = new CircleBody(60, position);
             this.meleeDamage = 2;
             this.speed = 300;
+            this.swingStart = 4;
+            this.swingEnd = 7;
 
             this.melee.active = false;
         }
@@ -88,6 +94,8 @@ namespace Joulurauhaa2020
         public void Update(float deltaTime, List<Projectile> projectilesIn)
         { 
             // Stop movement, so that it will be set according to input
+            // TODO direction here means movement direction, when in other 
+            // classes it's the facing -direction :/
             direction = Vector2.Zero;
 
             // Process input:
@@ -95,16 +103,26 @@ namespace Joulurauhaa2020
             // Get some needed values
             MouseState mState = Mouse.GetState();
             KeyboardState kbState = Keyboard.GetState();
-            Vector2 towardsMouse = Vector2.Normalize(
-                mState.Position.ToVector2() - body.position);
+            if (!swinging) // Prevent turning when attacking
+            {
+                facingDirection = Vector2.Normalize(
+                    mState.Position.ToVector2() - body.position);
+            }
 
-            // Turn towards position of mouse
-            angle = (float)Math.Atan2(towardsMouse.Y, towardsMouse.X);
+            // Turn towards the direction now facing
+            angle = (float)Math.Atan2(facingDirection.Y, facingDirection.X);
             
             /* Mouse 1 */
             if (mState.LeftButton == ButtonState.Pressed && mLeftReleased)
             {
-                ExecuteHit();
+                //ExecuteHit();
+
+                Console.WriteLine("Santa be swinging");
+                swinging = true;
+                animation.PlayOnce();
+                // Play animation
+                // Spawn a hitbox for the hit at correct animation frame
+                // Remove hitbox at correct animation frame
             }
             // No holding down
             mLeftReleased = mState.LeftButton == ButtonState.Released;
@@ -116,7 +134,7 @@ namespace Joulurauhaa2020
                 {
                     Console.WriteLine("Santa be throwing");
                     Projectile elf = hangingElves.Pop();
-                    elf.Fly(towardsMouse);
+                    elf.Fly(facingDirection);
                     projectilesIn.Add(elf);
                     // Increase speed from weight loss
                     speed += speed <= 300f ? 25f : 0f;
@@ -148,24 +166,48 @@ namespace Joulurauhaa2020
                 direction += Vector2.UnitX; 
             }
             
-
-            // FIXME *Everything* disappears when normalizing; 
-            // possibly direction * speed going haywire?
-            // Normalize the direction, so eg. abs(Up + Left) == abs(Up)
-            //this.direction = Vector2.Normalize(this.direction);
-            // Change position according to game time
-            body.position += direction * speed * deltaTime;
-   
-            // Position melee to front
-            melee.position = body.position + 
-                (towardsMouse * (body.radius + melee.radius));
+            // Execute/Disable swing:
+            if (swinging)
+            {
+                uint tft = animation.TotalFrameTime;
+                //System.Console.WriteLine($"{swingStart} < {tft} < {swingEnd}");
+                if (swingStart <= tft && tft <= swingEnd)
+                {
+                    System.Console.WriteLine("Melee active");
+                    melee.active = true;
+                    // Position melee to front
+                    melee.position = body.position + 
+                        (facingDirection * (body.radius + melee.radius));
+                }
+                else if (tft > swingEnd)
+                {
+                    swinging = false;
+                    melee.active = false;
+                    System.Console.WriteLine("Melee inactive");
+                    body.position += direction * speed * deltaTime;
+                }
+            }
+            else
+            {
+                melee.active = false;
+                System.Console.WriteLine("Melee inactive");
  
+                // Immobilize when swinging TODO move to earlier !swinging-check
+
+                // FIXME *Everything* disappears when normalizing; 
+                // possibly direction * speed going haywire?
+                // Normalize the direction, so eg. abs(Up + Left) == abs(Up)
+                //this.direction = Vector2.Normalize(this.direction);
+                // Change position according to game time
+                body.position += direction * speed * deltaTime;
+           }
+
             // Update the elf-projectiles attached to santa
             int hangingIndex = 1;
             foreach (Projectile elf in hangingElves)
             {
                 elf.body.position = body.position + Vector2.Transform(
-                    1.2f * body.radius * Vector2.Normalize(towardsMouse), 
+                    1.2f * body.radius * Vector2.Normalize(facingDirection), 
                     Matrix.CreateRotationZ(
                             hangingIndex * (float)(Math.PI / 4)
                     )

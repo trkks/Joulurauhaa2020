@@ -191,7 +191,7 @@ namespace Joulurauhaa2020
 
                 if (elf.body.Colliding(player.melee))
                 {
-                    Console.WriteLine("Melee hit!!");
+                    //Console.WriteLine("Melee hit!!");
                     Collisions.Handle(player, elf, null);
                 }
 
