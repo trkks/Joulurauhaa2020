@@ -20,7 +20,6 @@ namespace Joulurauhaa2020
             Broken = 4
         }
 
-        public bool bounced { get => bounceCount > 0; }
         public float angle; 
         private State state;
         public Tag tag;
@@ -29,18 +28,20 @@ namespace Joulurauhaa2020
 
         private const float bounceMultiplier = 1.5f;
         private readonly float originalSpeed;
-        private float slowdown = 100f;
+        private readonly float slowdown;
         private float speed;
-        private int bounceCount; 
+        private float bounceCount; 
         private Vector2 direction;
 
         public Projectile(AnimatedTexture2D animation, CircleBody body, 
-                          float speed, Tag tag, State state=State.None)
+                          float speed, float slowdown, Tag tag, 
+                          State state=State.None)
         {
             this.bounceCount = 0;
             this.state = state;
             this.angle = 0;
             this.speed = speed;
+            this.slowdown = slowdown;
             this.originalSpeed = speed;
             this.animation = animation;
             this.body = body;
@@ -53,12 +54,11 @@ namespace Joulurauhaa2020
 
         public void Bounce(Vector2 normal)
         {
-            if (state != State.Broken)
+            if (StateIs(State.Flying))
             {
+                bounceCount += 1f;
                 direction = Vector2.Normalize(
                     Vector2.Reflect(direction, normal));
-                bounceCount++;
-                slowdown *= bounceMultiplier * bounceCount;
             }
         }
 
@@ -86,8 +86,8 @@ namespace Joulurauhaa2020
 
         public void Fly(Vector2 toward)
         {
-            direction = Vector2.Normalize(toward);
             state = State.Flying | State.Pickup;
+            direction = Vector2.Normalize(toward);
             body.active = true;
         }
 
@@ -102,6 +102,7 @@ namespace Joulurauhaa2020
             state = State.None;
             speed = originalSpeed;
 
+            // TODO layer from originalLayer -> bottle-pickups under Elfs
             animation.layer = 0.8f;
         }
 
@@ -110,7 +111,7 @@ namespace Joulurauhaa2020
             if (StateIs(State.Flying))
             {
                 System.Console.WriteLine(speed);
-                speed -= slowdown * deltaTime;
+                speed -= slowdown * bounceMultiplier * bounceCount;
                 if (speed <= 0)
                 {
                     Break();

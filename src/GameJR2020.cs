@@ -65,7 +65,7 @@ namespace Joulurauhaa2020
                     new uint[]{ 5, 2, 2 }, 0.25f),
                 new CircleBody(bottleTexture.Bounds.Size.Y, 
                                position ?? Vector2.Zero),
-                1000, Tag.Bottle, Projectile.State.Pickup);
+                1500, 150, Tag.Bottle, Projectile.State.Pickup);
             bottle.angle = angle;
             return bottle;
         }

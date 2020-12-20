@@ -46,7 +46,8 @@ namespace Joulurauhaa2020
             // FIXME
             // Freaking slow.. maybe direction in projectile not normalized?
             // or ive not understood/calculated deltaTime right top level...
-            var projectile = new Projectile(animation, body, 800, Tag.Elf);
+            var projectile = new Projectile(animation, body, 800, 2,
+                                            Tag.Elf);
             return projectile;
         }
 
