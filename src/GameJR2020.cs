@@ -16,6 +16,7 @@ namespace Joulurauhaa2020
         private static Vector2 playerStartPosition = new Vector2(400, 400);
         //private static Timer playtime; //TODO use gametime.TotalGameTime?
         private static Texture2D elfTexture;
+        private static Texture2D bottleTexture;
 
         // Primitive fields
         private int elfSpawnRate = 600;
@@ -35,7 +36,6 @@ namespace Joulurauhaa2020
         private Santa player;
         private List<Projectile> projectiles;
         private Wall[] walls;
-        private List<object> deadObjects;
 
         public GameJR2020()
         {
@@ -53,6 +53,36 @@ namespace Joulurauhaa2020
             graphics.ApplyChanges();
             Window.Title = "Joulurauhaa2020";
             base.Initialize();
+        }
+
+        private Projectile CreateBottle(Vector2? position=null, 
+                                        float angle=0)
+        {
+            //TODO 0.25f == GameJR2020.DeadLayer
+            var bottle = new Projectile(
+                new AnimatedTexture2D(bottleTexture, 
+                    new Point(44,44), new Vector2(22,22),
+                    new uint[]{ 5, 2, 2 }, 0.25f),
+                new CircleBody(bottleTexture.Bounds.Size.Y, 
+                               position ?? Vector2.Zero),
+                1000, Tag.Bottle, Projectile.State.Pickup);
+            bottle.angle = angle;
+            return bottle;
+        }
+
+        private void SpawnBottle()
+        {
+            // Choose a door
+            // Play the door's animation
+            // Spawn a bottle at the door
+            var bottlePosition = new Vector2(
+                (float)random.NextDouble() * (float)screenWidth,
+                (float)random.NextDouble() * (float)screenHeight
+            );
+
+            float angle = (float)random.NextDouble()*2f-1f;
+
+            projectiles.Add(CreateBottle(bottlePosition, angle));
         }
 
         private void SpawnElf()
@@ -75,26 +105,29 @@ namespace Joulurauhaa2020
             device = graphics.GraphicsDevice;
             screenWidth = device.PresentationParameters.BackBufferWidth;
             screenHeight = device.PresentationParameters.BackBufferHeight;
-            //elfSpawner.Elapsed += (s,e) => SpawnElf();
-            //elfSpawner.AutoReset = true;
-            //elfSpawner.Enabled = true;
 
             // Global visuals:
+            bottleTexture = Content.Load<Texture2D>("bottle");
             floorTexture = Content.Load<Texture2D>("floor");
-
-            // Game objects:
-            //Texture2D bottleTexture = Content.Load<Texture2D>("bottle");
-            player = new Santa(playerStartPosition, 
-                Content.Load<Texture2D>("santa_atlas")
-            );
-
-            elves = new List<Elf>(128);
             elfTexture = Content.Load<Texture2D>("elf_atlas");
 
-            // Make some debug elves
+            // Game objects:
+
+            player = new Santa(playerStartPosition, 
+                Content.Load<Texture2D>("santaBottle_atlas"),
+                Content.Load<Texture2D>("santaFist_atlas")
+            );
+            player.AddProjectile(CreateBottle());
+
+            elves = new List<Elf>(128);
+
+            projectiles = new List<Projectile>(32);
+
+            // Make some debug elves and bottles
             for (int i = 0; i < 10; ++i)
             {
                 SpawnElf();
+                SpawnBottle();
             }
 
             var wallHorizontal = Content.Load<Texture2D>("wall_horizontal");
@@ -127,10 +160,6 @@ namespace Joulurauhaa2020
                     new Vector2(0, (float)screenHeight-wallThickness)
                 )
             };
-
-            projectiles = new List<Projectile>(32);
-
-            deadObjects = new List<object>(128);
         }
 
         protected override void Update(GameTime gameTime)
@@ -166,7 +195,9 @@ namespace Joulurauhaa2020
             }
 
             // Store elves ready for removal when they collide with player
+            // NOTE this is stupid
             var removableElves = new List<Elf>(8);
+            var removableProjectiles = new List<Projectile>(projectiles.Count);
 
             // Handle collisions between collidables
             foreach (Elf elf in elves)
@@ -191,7 +222,6 @@ namespace Joulurauhaa2020
 
                 if (elf.body.Colliding(player.melee))
                 {
-                    //Console.WriteLine("Melee hit!!");
                     Collisions.Handle(player, elf, null);
                 }
 
@@ -216,7 +246,7 @@ namespace Joulurauhaa2020
 
                 if (projectile.body.Colliding(player.body))
                 {
-                    Collisions.Handle(player, projectile);
+                    Collisions.Handle(player, projectile, removableProjectiles);
                 }
             }
 
@@ -236,8 +266,9 @@ namespace Joulurauhaa2020
             }
 
             // Remove elves turned into projectiles from living elves
-            // NOTE this is stupid
+            // NOTE this is still kinda stupid
             elves.RemoveAll(elf => removableElves.Contains(elf));
+            projectiles.RemoveAll(proj => removableProjectiles.Contains(proj));
 
             // Check for gameover
             if (!player.alive)

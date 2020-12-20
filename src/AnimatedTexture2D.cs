@@ -93,6 +93,25 @@ namespace Joulurauhaa2020
             }
         }
 
+        /// <summary>
+        /// For using last frame of animation as a static visual 
+        /// </summary>
+        public void DrawLastFrame(SpriteBatch spriteBatch, Vector2 position,
+                                  float angle)
+        {
+             spriteBatch.Draw(
+                spriteAtlas,
+                position,
+                frames[frames.Length-1].Item1,
+                color,
+                angle,
+                spriteOrigin,
+                scale,
+                SpriteEffects.None,
+                layer
+            );            
+        }
+
         public void Toggle()
         {
             animating = !animating;

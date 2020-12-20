@@ -12,25 +12,33 @@ namespace Joulurauhaa2020
 
     public class Projectile
     {
-        public bool bounced; 
-        public bool flying; 
+        public enum State
+        {
+            None = 0,
+            Pickup = 1,
+            Flying = 2,
+            Broken = 4
+        }
+
+        public bool bounced { get => bounceCount > 0; }
         public float angle; 
-        public float speed;
-        public float originalSpeed;
+        private State state;
         public Tag tag;
         public AnimatedTexture2D animation;
         public CircleBody body; // Object spinning in air -> use circles
 
         private const float bounceMultiplier = 1.5f;
+        private readonly float originalSpeed;
         private float slowdown = 100f;
-        private float slowdownMultiplier = 1.2f;
+        private float speed;
+        private int bounceCount; 
         private Vector2 direction;
 
         public Projectile(AnimatedTexture2D animation, CircleBody body, 
-                          float speed, Tag tag)
+                          float speed, Tag tag, State state=State.None)
         {
-            this.bounced = false;
-            this.flying = false;
+            this.bounceCount = 0;
+            this.state = state;
             this.angle = 0;
             this.speed = speed;
             this.originalSpeed = speed;
@@ -39,43 +47,59 @@ namespace Joulurauhaa2020
             this.direction = Vector2.Zero;
             this.tag = tag;
 
+            // TODO 0.8f == GameJR2020.ProjectileLayer
             this.animation.layer = 0.8f;
-        }
-
-        public void Draw(SpriteBatch spriteBatch)
-        {
-            animation.Draw(spriteBatch, body.position, angle);
         }
 
         public void Bounce(Vector2 normal)
         {
-            direction = Vector2.Normalize(
-                Vector2.Reflect(direction, normal));
+            if (state != State.Broken)
+            {
+                direction = Vector2.Normalize(
+                    Vector2.Reflect(direction, normal));
+                bounceCount++;
+                slowdown *= bounceMultiplier * bounceCount;
+            }
+        }
 
-            slowdown *= slowdownMultiplier;
-
-            bounced = true;
+        public void Draw(SpriteBatch spriteBatch)
+        {
+            if (state == State.Broken)
+            {
+                animation.DrawLastFrame(spriteBatch, body.position, angle);
+            }
+            else
+            {
+                animation.Draw(spriteBatch, body.position, angle);
+            }
         }
 
         public void Break()
         {
-            flying = false;
-            animation.animating = false;
+            bounceCount = 0;
+            state = State.Broken;
+            body.active = false;
             animation.color = GameJR2020.colorOfDeath;
             animation.layer = 0.25f;
-            //TODO Play breaking animation & darken color
+            animation.PlayOnce();
         }
 
         public void Fly(Vector2 toward)
         {
             direction = Vector2.Normalize(toward);
-            flying = true;
+            state = State.Flying | State.Pickup;
+            body.active = true;
+        }
+
+        public bool StateIs(State s)
+        {
+            return (state & s) != State.None;
         }
 
         public void Reset()
         {
-            bounced = false;
-            flying = false;
+            bounceCount = 0;
+            state = State.None;
             speed = originalSpeed;
 
             animation.layer = 0.8f;
@@ -83,13 +107,9 @@ namespace Joulurauhaa2020
 
         public void Update(float deltaTime)
         {
-            if (flying)
+            if (StateIs(State.Flying))
             {
-                //if (bounced)
-                //{
-                //    slowdown *= bounceMultiplier; 
-                //}
-                // TODO bool SlowDown(float multiplier=1f)
+                System.Console.WriteLine(speed);
                 speed -= slowdown * deltaTime;
                 if (speed <= 0)
                 {
@@ -97,7 +117,6 @@ namespace Joulurauhaa2020
                 }
                 else
                 {
-                    // TODO Normalizing kills velocity
                     body.position += direction * speed * deltaTime;
                 }
                 angle += 0.2f;

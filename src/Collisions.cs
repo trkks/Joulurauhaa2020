@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 
@@ -25,14 +26,14 @@ namespace Joulurauhaa2020
             }
         }
  
-        public static void Handle(Santa santa, Projectile projectile)
+        public static void Handle(Santa santa, Projectile projectile,
+                                  List<Projectile> toBeRemoved)
         {
-            if (projectile.flying)
+            Console.WriteLine($"Santa to {projectile.tag} collision");
+            if (projectile.StateIs(Projectile.State.Pickup))
             {
-                if (projectile.tag == Tag.Elf && projectile.bounced)
-                {
-                    santa.AddProjectile(projectile);
-                }
+                santa.AddProjectile(projectile);
+                toBeRemoved.Add(projectile);
             }
         }
    
@@ -65,9 +66,10 @@ namespace Joulurauhaa2020
 
         public static void Handle(Elf elf, Projectile projectile)
         {
+            System.Console.WriteLine("Collision: Elf to projectile");
             if (elf.alive)
             {
-                if (projectile.flying)
+                if (projectile.StateIs(Projectile.State.Flying))
                 {
                     projectile.Bounce(Vector2.Normalize(
                         projectile.body.position - elf.body.position));
@@ -77,14 +79,15 @@ namespace Joulurauhaa2020
                 {
                     elf.SlowDown();
                 }
-                else if (projectile.tag == Tag.Bottle)
-                {
-                    // Walking over broken bottle hurts
-                    // NOTE Set to 1 because I can't be arsed to implement
-                    // hitbox timers and such
-                    //elf.health = 1;
-                    elf.Die();
-                }
+                // TODO for broken bottles
+                //else if (projectile.tag == Tag.Bottle)
+                //{
+                //    // Walking over broken bottle hurts
+                //    // NOTE Set to 1 because I can't be arsed to implement
+                //    // hitbox timers and such
+                //    //elf.health = 1;
+                //    elf.Die();
+                //}
             }
         }
 
@@ -96,6 +99,7 @@ namespace Joulurauhaa2020
         public static void Handle(Projectile projectile1,
                                   Projectile projectile2)
         {
+            System.Console.WriteLine("Collision: Projectile to projectile");
             projectile1.Bounce(
                 projectile1.body.position - projectile2.body.position);
             projectile2.Bounce(
@@ -104,7 +108,15 @@ namespace Joulurauhaa2020
  
         public static void Handle(Projectile projectile, Wall wall)
         {
-            projectile.Bounce(wall.direction);
+            System.Console.WriteLine("Collision: Projectile to wall");
+            if (projectile.StateIs(Projectile.State.Flying))
+            {
+                projectile.Bounce(wall.direction);
+            }
+            else
+            {
+                wall.PushAway(projectile.body);
+            }
         }
     }
 }
