@@ -73,7 +73,8 @@ namespace Joulurauhaa2020
                 {
                     projectile.Bounce(Vector2.Normalize(
                         projectile.body.position - elf.body.position));
-                    elf.Die(); 
+                    elf.Hurt(projectile.damage);
+                    //elf.Die(); 
                 }
                 else if (projectile.tag == Tag.Elf)
                 {

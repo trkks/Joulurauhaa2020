@@ -11,6 +11,7 @@ namespace Joulurauhaa2020
     {
         // Global static fields
         public static Color colorOfDeath = new Color(0xa9, 0xa9, 0xa9);
+        public static Color colorOfHurt = new Color(0x8b, 0x5f, 0x5f);
 
         private static Random random = new Random();
         private static Vector2 playerStartPosition = new Vector2(400, 400);
@@ -282,9 +283,19 @@ namespace Joulurauhaa2020
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.Black);
+            
+            // Get the objects to draw in specific order without using layers
+            // -> no "flickering" because of unstable sort
+            var bottomElves = elves.FindAll(elf => !elf.alive);
+            var topElves = elves.FindAll(elf => elf.alive);
+            var bottomProjectiles = projectiles.FindAll(
+                projectile => projectile.StateIs(
+                    Projectile.State.Broken | Projectile.State.Pickup));
+            var topProjectiles = projectiles.FindAll(
+                projectile => projectile.StateIs(Projectile.State.Flying));
 
-            //FIXME Unstable draw-sorting makes dead objects flicker
-            spriteBatch.Begin(SpriteSortMode.FrontToBack);
+
+            spriteBatch.Begin();
 
 
             spriteBatch.Draw(
@@ -299,17 +310,27 @@ namespace Joulurauhaa2020
                 0
             );
             
-            foreach (Elf elf in elves)
+            foreach (Elf bottomElf in bottomElves)
+            {
+                bottomElf.Draw(spriteBatch);
+            }
+
+            foreach (Projectile bottomProjectile in bottomProjectiles)
+            {
+                bottomProjectile.Draw(spriteBatch);
+            }
+
+            foreach (Elf elf in topElves)
             {
                 elf.Draw(spriteBatch);
             }
-
-            player.Draw(spriteBatch);
-
-            foreach (Projectile projectile in projectiles)
+            
+            foreach (Projectile projectile in topProjectiles)
             {
                 projectile.Draw(spriteBatch);
             }
+
+            player.Draw(spriteBatch);
 
             foreach (Wall wall in walls)
             {

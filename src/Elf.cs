@@ -69,6 +69,10 @@ namespace Joulurauhaa2020
         public void Hurt(int damage)
         {
             health -= damage;
+            if (health <= 1)
+            {
+                animation.color = GameJR2020.colorOfHurt;
+            }
             if (health <= 0)
             {
                 Die();

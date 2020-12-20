@@ -21,6 +21,7 @@ namespace Joulurauhaa2020
         }
 
         public float angle; 
+        public int damage; 
         private State state;
         public Tag tag;
         public AnimatedTexture2D animation;
@@ -37,15 +38,16 @@ namespace Joulurauhaa2020
                           float speed, float slowdown, Tag tag, 
                           State state=State.None)
         {
-            this.bounceCount = 0;
-            this.state = state;
             this.angle = 0;
-            this.speed = speed;
-            this.slowdown = slowdown;
-            this.originalSpeed = speed;
             this.animation = animation;
             this.body = body;
+            this.bounceCount = 0;
+            this.damage = 2;
             this.direction = Vector2.Zero;
+            this.slowdown = slowdown;
+            this.originalSpeed = speed;
+            this.speed = speed;
+            this.state = state;
             this.tag = tag;
 
             // TODO 0.8f == GameJR2020.ProjectileLayer
