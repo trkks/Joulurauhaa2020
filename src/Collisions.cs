@@ -47,13 +47,12 @@ namespace Joulurauhaa2020
         {
             if (elf1.alive && elf2.alive)
             {
-                // Push away from each other
-                elf1.direction = Vector2.Reflect(
-                    elf1.direction, 
-                    Vector2.Normalize(elf1.body.position - elf2.body.position));
-                elf2.direction = Vector2.Reflect(
-                    elf2.direction, 
-                    Vector2.Normalize(elf2.body.position - elf1.body.position));
+                // TODO Fix elflerp -> set direction to reflect here
+                Vector2 away = Vector2.Normalize(
+                    elf1.body.position - elf2.body.position) * 
+                    (elf1.body.radius);
+                // Push away from the other
+                elf1.body.position += away;
             }
             else if (elf1.alive && !elf2.alive)
             {
@@ -82,7 +81,7 @@ namespace Joulurauhaa2020
                     elf.SlowDown();
                 }
                 // TODO for broken bottles
-                //else if (projectile.tag == Tag.Bottle)
+                //else if (projectile.tag == Tag.Bottle && projectile.StateIs(Projectile.Pickup)
                 //{
                 //    // Walking over broken bottle hurts
                 //    // NOTE Set to 1 because I can't be arsed to implement

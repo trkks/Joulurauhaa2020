@@ -13,16 +13,15 @@ namespace Joulurauhaa2020
         public static Color colorOfDeath = new Color(0xa9, 0xa9, 0xa9);
         public static Color colorOfHurt = Color.Red;
 
+        private static Vector2 sceneDimensions = new Vector2(800,600);
         private static Random random = new Random();
         private static Vector2 playerStartPosition = new Vector2(400, 400);
         //private static Timer playtime; //TODO use gametime.TotalGameTime?
-        private static Texture2D elfTexture;
-        private static Texture2D bottleTexture;
 
-        // Primitive fields
+        // Value-type fields
         private int elfSpawnRate = 600;
-        private int screenWidth;
-        private int screenHeight;
+        private Vector2 scenePosition;
+        private Vector2 overlayPosition;
 
         // Object fields
         private GraphicsDeviceManager graphics;
@@ -30,7 +29,12 @@ namespace Joulurauhaa2020
         private GraphicsDevice device; // "The hardware graphical device"
 
         // "Cosmetic" objects
-        private Texture2D floorTexture;
+        private static Texture2D floorTexture;
+        private static Texture2D elfTexture;
+        private static Texture2D bottleTexture;
+        private static Texture2D overlayTexture;
+        private static Texture2D wallsTexture;
+
 
         // Gameobjects
         private List<Elf> elves;
@@ -48,9 +52,9 @@ namespace Joulurauhaa2020
         protected override void Initialize()
         {
             // Backbuffer contains what will be drawn to screen
-            graphics.PreferredBackBufferWidth = 800;
-            graphics.PreferredBackBufferHeight = 600;
-            graphics.IsFullScreen = false;
+            graphics.PreferredBackBufferWidth = 1366;
+            graphics.PreferredBackBufferHeight = 768;
+            graphics.IsFullScreen = true;
             graphics.ApplyChanges();
             Window.Title = "Joulurauhaa2020";
             base.Initialize();
@@ -76,9 +80,9 @@ namespace Joulurauhaa2020
             // Choose a door
             // Play the door's animation
             // Spawn a bottle at the door
-            var bottlePosition = new Vector2(
-                (float)random.NextDouble() * (float)screenWidth,
-                (float)random.NextDouble() * (float)screenHeight
+            var bottlePosition = scenePosition + new Vector2(
+                (float)random.NextDouble() * sceneDimensions.X,
+                (float)random.NextDouble() * sceneDimensions.Y
             );
 
             float angle = (float)random.NextDouble()*2f-1f;
@@ -91,9 +95,9 @@ namespace Joulurauhaa2020
             // Choose a door
             // Play the door's animation
             // Spawn an elf at the door
-            var elfPosition = new Vector2(
-                (float)random.NextDouble() * (float)screenWidth,
-                (float)random.NextDouble() * (float)screenHeight
+            var elfPosition = scenePosition + new Vector2(
+                (float)random.NextDouble() * sceneDimensions.X,
+                (float)random.NextDouble() * sceneDimensions.Y
             );
 
             elves.Add(new Elf(elfPosition, elfTexture));
@@ -102,15 +106,24 @@ namespace Joulurauhaa2020
         protected override void LoadContent()
         {
             // General fields:
+            float wallThickness = 10f;
             spriteBatch = new SpriteBatch(GraphicsDevice);
             device = graphics.GraphicsDevice;
-            screenWidth = device.PresentationParameters.BackBufferWidth;
-            screenHeight = device.PresentationParameters.BackBufferHeight;
+            scenePosition = new Vector2(
+                 (float)device.PresentationParameters.BackBufferWidth -
+                     sceneDimensions.X,
+                 (float)device.PresentationParameters.BackBufferHeight -
+                     sceneDimensions.Y
+            ) / 2f;
+                                         // - Thickness of overlay
+            overlayPosition = scenePosition - new Vector2(10); 
 
             // Global visuals:
             bottleTexture = Content.Load<Texture2D>("bottle");
             floorTexture = Content.Load<Texture2D>("floor");
             elfTexture = Content.Load<Texture2D>("elf_atlas");
+            overlayTexture = Content.Load<Texture2D>("overlay");
+            wallsTexture = Content.Load<Texture2D>("walls");
 
             // Game objects:
 
@@ -133,34 +146,28 @@ namespace Joulurauhaa2020
                 SpawnBottle();
             }
 
-            var wallHorizontal = Content.Load<Texture2D>("wall_horizontal");
-            var wallVertical = Content.Load<Texture2D>("wall_vertical");
-
-            float wallThickness = 10f;
             walls = new Wall[] {
                 new Wall( // Left
-                    wallVertical,
-                    new Vector2(wallThickness, (float)screenHeight),
+                    new Vector2(wallThickness, sceneDimensions.Y),
                     Vector2.UnitX,
-                    Vector2.Zero
+                    scenePosition
                 ),
                 new Wall( // Right
-                    wallVertical,
-                    new Vector2(wallThickness, (float)screenHeight),
+                    new Vector2(wallThickness, sceneDimensions.Y),
                     -Vector2.UnitX,
-                    new Vector2((float)screenWidth-wallThickness, 0)
+                    scenePosition +
+                        new Vector2(sceneDimensions.X - wallThickness, 0)
                 ),
                 new Wall( // Top
-                    wallHorizontal,
-                    new Vector2((float)screenWidth, wallThickness),
+                    new Vector2(sceneDimensions.X, wallThickness),
                     Vector2.UnitY,
-                    Vector2.Zero
+                    scenePosition
                 ),
                 new Wall( // Bottom
-                    wallHorizontal,
-                    new Vector2((float)screenWidth, wallThickness),
+                    new Vector2(sceneDimensions.X, wallThickness),
                     -Vector2.UnitY,
-                    new Vector2(0, (float)screenHeight-wallThickness)
+                    scenePosition + 
+                        new Vector2(0, sceneDimensions.Y - wallThickness)
                 )
             };
         }
@@ -170,7 +177,10 @@ namespace Joulurauhaa2020
             // Spawn new elves 
             if (gameTime.TotalGameTime.Milliseconds % elfSpawnRate == 0)
             {
-                SpawnElf();
+                if (random.Next(10) < 1) // 10% chance for bottle
+                    SpawnBottle();
+                else
+                    SpawnElf();
             }
 
             // Handle UI-specific controls
@@ -225,6 +235,8 @@ namespace Joulurauhaa2020
 
                 if (elf.body.Colliding(player.melee))
                 {
+                    // TODO if elf was hit last frame, do not go here
+                    // ie. only check collision once per a "continuous event"
                     Collisions.Handle(player, elf, null);
                 }
 
@@ -302,7 +314,7 @@ namespace Joulurauhaa2020
 
             spriteBatch.Draw(
                 floorTexture,
-                Vector2.Zero,
+                scenePosition,
                 null,
                 Color.White,
                 0f,
@@ -334,12 +346,30 @@ namespace Joulurauhaa2020
 
             player.Draw(spriteBatch);
 
-            foreach (Wall wall in walls)
-            {
-                wall.Draw(spriteBatch);
-            }
-
-
+            spriteBatch.Draw(
+                wallsTexture,
+                scenePosition,
+                null,
+                Color.White,
+                0f,
+                Vector2.Zero,
+                1f,
+                SpriteEffects.None,
+                0
+            );
+            spriteBatch.Draw(
+                overlayTexture,
+                overlayPosition,
+                null,
+                Color.White,
+                0f,
+                Vector2.Zero,
+                1f,
+                SpriteEffects.None,
+                0
+            );
+            
+            
             spriteBatch.End();
 
             base.Draw(gameTime);

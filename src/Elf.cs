@@ -72,6 +72,7 @@ namespace Joulurauhaa2020
             if (health <= 1)
             {
                 animation.color = GameJR2020.colorOfHurt;
+                //TODO hurtAction.Active = true; to temporarily disable hitbox
             }
             if (health <= 0)
             {
@@ -95,11 +96,12 @@ namespace Joulurauhaa2020
 
         public void Update(float deltaTime, Santa santa)
         {
+            // FIXME lerpin aint workin
             if (directionLerp >= 1f)
             {   
                 directionLerp = 0;
             }
-            directionLerp += 0.2f;
+            directionLerp += 0.05f;
             Direction = Vector2.Lerp(
                 Direction, santa.body.position-body.position,
                 directionLerp);

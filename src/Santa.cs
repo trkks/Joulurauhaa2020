@@ -94,6 +94,7 @@ namespace Joulurauhaa2020
                     .Length; 
                 if (bottleCount < 3) // MAX_BOTTLES
                 {
+                    //TODO visualize bottle-inventory on screen (position)
                     // Push bottle on top
                     projectiles.Push(projectile);
                 }
@@ -115,6 +116,7 @@ namespace Joulurauhaa2020
                     p.Draw(spriteBatch);
                 }
             }
+            //TODO visualize bottle-inventory on screen (draw)
         }
 
         public void Update(float deltaTime)
