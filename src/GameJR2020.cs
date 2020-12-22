@@ -11,7 +11,7 @@ namespace Joulurauhaa2020
     {
         // Global static fields
         public static Color colorOfDeath = new Color(0xa9, 0xa9, 0xa9);
-        public static Color colorOfHurt = new Color(0x8b, 0x5f, 0x5f);
+        public static Color colorOfHurt = Color.Red;
 
         private static Random random = new Random();
         private static Vector2 playerStartPosition = new Vector2(400, 400);
@@ -114,15 +114,17 @@ namespace Joulurauhaa2020
 
             // Game objects:
 
+            projectiles = new List<Projectile>(32);
+
             player = new Santa(playerStartPosition, 
                 Content.Load<Texture2D>("santaBottle_atlas"),
-                Content.Load<Texture2D>("santaFist_atlas")
+                Content.Load<Texture2D>("santaFist_atlas"),
+                projectiles
             );
             player.AddProjectile(CreateBottle());
 
             elves = new List<Elf>(128);
 
-            projectiles = new List<Projectile>(32);
 
             // Make some debug elves and bottles
             for (int i = 0; i < 10; ++i)
@@ -179,7 +181,7 @@ namespace Joulurauhaa2020
 
             // Update all updatables:
 
-            player.Update(deltaTime, projectiles);
+            player.Update(deltaTime);
 
             foreach (Projectile projectile in projectiles)
             {
@@ -272,7 +274,7 @@ namespace Joulurauhaa2020
             projectiles.RemoveAll(proj => removableProjectiles.Contains(proj));
 
             // Check for gameover
-            if (!player.alive)
+            if (player.IsDead)
             {
                 GameOver();
             }
@@ -346,7 +348,7 @@ namespace Joulurauhaa2020
         private void GameOver()
         {
             //TODO
-            Console.WriteLine("Game over.");
+            //Console.WriteLine("Game over.");
         }
     }
 }

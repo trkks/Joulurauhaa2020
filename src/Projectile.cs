@@ -112,7 +112,6 @@ namespace Joulurauhaa2020
         {
             if (StateIs(State.Flying))
             {
-                System.Console.WriteLine(speed);
                 speed -= slowdown * bounceMultiplier * bounceCount;
                 if (speed <= 0)
                 {

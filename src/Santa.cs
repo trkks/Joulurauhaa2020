@@ -8,7 +8,6 @@ namespace Joulurauhaa2020
 {
     public class Santa
     {
-        public bool alive;
         public float speed;
         public int meleeDamage;
         public AnimatedTexture2D animation;
@@ -17,22 +16,27 @@ namespace Joulurauhaa2020
 
         private bool mLeftReleased;
         private bool mRightReleased;
-        private bool swinging;
-        private bool hasBottle;
         private float angle;
-        private uint swingStart;
-        private uint swingEnd;
         private AnimatedTexture2D bottleAnimation;
         private AnimatedTexture2D fistAnimation;
+        private List<Projectile> simulationProjectiles;
         private Stack<Projectile> projectiles;
-        private Projectile bottle;
+        private ActionSequence action;
+        private ActionSequence swingAction;
+        private ActionSequence throwAction;
         private Vector2 direction;
         private Vector2 facingDirection;
+        
+        public bool IsDead 
+        {
+            get => Array.FindAll(projectiles.ToArray(), p=>p.tag == Tag.Elf)
+                   .Length >= 8; // MAX_ELVES
+        }
 
         public Santa(Vector2 position, Texture2D bottleSpriteAtlas,
-                     Texture2D fistSpriteAtlas)
+                     Texture2D fistSpriteAtlas, 
+                     List<Projectile> simulationProjectiles)
         {
-            this.alive = true;
             this.angle = 0;
             this.bottleAnimation = new AnimatedTexture2D(bottleSpriteAtlas, 
                 new Point(128,128), new Vector2(40,64),
@@ -41,22 +45,24 @@ namespace Joulurauhaa2020
                 new Point(128,128), new Vector2(40,64),
                 new uint[5] { 2, 4, 10, 2, 5 }, 0.75f);
             this.body = new CircleBody(40, position);
-            this.projectiles = new Stack<Projectile>(8); //MAX_ELVES);
-            //TODO This needs to be huge... its weird
-            this.melee = new CircleBody(60, position);
-            this.meleeDamage = 2;
+            this.simulationProjectiles = simulationProjectiles;
+            this.projectiles = 
+                new Stack<Projectile>(8+3);// MAX_ELVES + MAX_BOTTLES
+            //TODO This needs to be huge... it's weird
+            this.melee = new CircleBody(60, Vector2.Zero);
             this.speed = 300;
-            this.swingStart = 4;
-            this.swingEnd = 7;
-            this.hasBottle = true;
-            this.animation = bottleAnimation;
-
+           
+            this.swingAction = SwingAction();
+            this.throwAction = ThrowAction();
+            this.action = ActionSequence.None;
             this.melee.active = false;
         }
 
         public void AddProjectile(Projectile projectile)
         {
+            // Disable hitbox etc
             projectile.Reset();
+
             if (projectile.tag == Tag.Elf)
             {
                 // Swap elf below bottles, so bottles always on top:
@@ -79,58 +85,39 @@ namespace Joulurauhaa2020
                 {
                     projectiles.Push(bottleTemp);
                 }
-
-                // Check for death
-                int elfCount = 0; 
-                foreach (Projectile p in projectiles)
-                {
-                    if (p.tag == Tag.Elf)
-                    {
-                        elfCount++;
-                    }
-                }
-                if (elfCount >= 8) // TODO MAX_ELVES
-                {
-                    //TODO Die();
-                    alive = false;
-                    speed = 0;
-                }
             }
             else if (projectile.tag == Tag.Bottle)
             {
-                // Check for max bottles in inventory
-                int bottleCount = 0; 
-                foreach (Projectile p in projectiles)
+                // Check if bottle fits into inventory
+                int bottleCount = Array.FindAll(
+                    projectiles.ToArray(), p=>p.tag == Tag.Bottle)
+                    .Length; 
+                if (bottleCount < 3) // MAX_BOTTLES
                 {
-                    if (p.tag == Tag.Bottle)
-                    {
-                        bottleCount++;
-                    }
-                }         
-                if (bottleCount < 3)
-                {
-                    // Hide from view
-                    projectile.body.position = new Vector2(-44, -44);
                     // Push bottle on top
                     projectiles.Push(projectile);
                 }
-                // TODO Do these in some better place?
-                //hasBottle = true;
-                //animation = bottleAnimation;
             }
+
+            // Update attack state according to pickup
+            SetCorrectAttackState();
         }
 
         public void Draw(SpriteBatch spriteBatch)
         {
             animation.Draw(spriteBatch, body.position, angle);
 
-            foreach (Projectile elf in projectiles)
+            foreach (Projectile p in projectiles)
             {
-                elf.Draw(spriteBatch);
+                // Only draw elves in inventory
+                if (p.tag == Tag.Elf)
+                {
+                    p.Draw(spriteBatch);
+                }
             }
         }
 
-        public void Update(float deltaTime, List<Projectile> projectilesIn)
+        public void Update(float deltaTime)
         { 
             // Get some needed values
             MouseState mState = Mouse.GetState();
@@ -139,17 +126,14 @@ namespace Joulurauhaa2020
             // Process key-input:
 
             /* Mouse 1 */
-            if (mState.LeftButton == ButtonState.Pressed && mLeftReleased)
-            {
-                swinging = true;
-            }
+            bool swinging = mState.LeftButton == ButtonState.Pressed && 
+                            mLeftReleased;
             // No holding down
             mLeftReleased = mState.LeftButton == ButtonState.Released;
 
             /* Mouse 2 */
             bool throwing = mState.RightButton == ButtonState.Pressed &&
                             mRightReleased;
-
             // No holding down
             mRightReleased = mState.RightButton == ButtonState.Released;
 
@@ -172,49 +156,39 @@ namespace Joulurauhaa2020
             }
             
             // React to inputs: 
-
-            if (swinging) // Continue or stop the swing:
+            
+            if (!action.Active && !animation.animating)
             {
-                // TODO Wrap this logic into an object?:
-                // FramedExecutor.Execute(); 
-                // == Animation + Action on specific frame
-
-                // Play animation
-                // Spawn a hitbox for the hit at correct animation frame
-                // Remove hitbox at correct animation frame
- 
-                uint tft = animation.TotalFrameTime;
-                //System.Console.WriteLine($"{swingStart} < {tft} < {swingEnd}");
-                if (tft < swingStart)
+                if (swinging)
                 {
-                    Console.WriteLine("Santa started swing");
-                    // Start animation
-                    animation.PlayOnce();
+                    System.Console.WriteLine("Received input for swinging");
+                    action = swingAction;
+                    action.Active = true;
                 }
-                else if (tft <= swingEnd)
+                else if (throwing)
                 {
-                    System.Console.WriteLine("Santa swinging");
-                    // Activate melee hitbox
-                    melee.active = true;
-                    // Position hitbox to front
-                    melee.position = body.position + 
-                        facingDirection * (body.radius + melee.radius);
-                }
-                else if (tft > swingEnd)
-                {
-                    System.Console.WriteLine("Santa stopped swing");
-                    // Disable swinging-state and melee hitbox
-                    swinging = false;
-                    melee.active = false;
-                    //System.Console.WriteLine("Melee inactive");
+                    System.Console.WriteLine("Received input for throwing");
+                    if (projectiles.Count > 0)
+                    {
+                        action = throwAction;
+                        action.Active = true;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Santa's out of projectiles");
+                        //playErrorSound();
+                    }
                 }
             }
-            else // Only update certain actions when not attacking
+
+            // Prevent movement during an action
+            if (!action.Active)
             {
                 // Allow moving when not swinging
                 // FIXME *Everything* disappears when normalizing; 
                 // possibly direction * speed going haywire?
-                // Normalize the direction, so eg. abs(Up + Left) == abs(Up)
+                // Normalize the direction, 
+                // so eg. abs(Up + Left) == abs(Up)
                 //this.direction = Vector2.Normalize(this.direction);
                 // Change position according to game time
                 body.position += direction * speed * deltaTime;
@@ -225,69 +199,141 @@ namespace Joulurauhaa2020
                 angle = (float)Math.Atan2(facingDirection.Y,
                                           facingDirection.X);
             }
-
-            if (throwing)
-            {
-                // TODO Play animation
-                ThrowProjectile(projectilesIn);
-            }
+            
+            // Update/Execute current action
+            action.Update();
 
             // Reset movement direction as to prevent "drifting"
             // TODO direction here means movement direction, when in other 
             // classes it's the facing -direction :/
             direction = Vector2.Zero;
 
-            // Update the elf-projectiles attached to santa:
-
-            int hangingIndex = 1;
-            var elves = Array.FindAll(projectiles.ToArray(), 
-                                      p=>p.tag == Tag.Elf);
-            foreach (Projectile elf in elves)
+            // Position the elf-projectiles attached to santa:
+            float hangingIndex = 1f;
+            float nudge = 1.2f;
+            foreach (Projectile p in projectiles)
             {
-                elf.body.position = body.position + Vector2.Transform(
-                    1.2f * body.radius * Vector2.Normalize(facingDirection), 
-                    Matrix.CreateRotationZ(
-                            hangingIndex * (float)(Math.PI / 4)
-                    )
-                );
+                if (p.tag == Tag.Elf)
+                {
+                    // Rotate around santa's body
+                    p.body.position = body.position + Vector2.Transform(
+                        nudge * body.radius * facingDirection,
+                        Matrix.CreateRotationZ(
+                                hangingIndex * (float)(Math.PI / 4.0)
+                        )
+                    );
 
-                Vector2 towardsSanta = Vector2.Normalize(
-                    body.position - elf.body.position);
-                elf.angle = (float)Math.Atan2(towardsSanta.Y, 
-                                              towardsSanta.X);
+                    // Turn towards santa's center
+                    Vector2 towardsSanta = Vector2.Normalize(
+                        body.position - p.body.position);
+                    p.angle = (float)Math.Atan2(towardsSanta.Y, 
+                                                towardsSanta.X);
 
-                hangingIndex++;
+                    // Increment the rotation multiplier
+                    hangingIndex += 1f;
+                }
             }
         }
 
-        private void ThrowProjectile(List<Projectile> projectilesIn)
+        /// <summary>
+        /// Remove the next projectile from inventory and launch it forward
+        /// </summary>
+        private void LaunchProjectile()
         {
-            if (projectiles.Count > 0)
+            // Remove projectile from inventory
+            Projectile projectile = projectiles.Pop();
+            //Console.WriteLine($"Santa throwing {projectile.tag}");
+
+            // Move outside of santa's body
+            float nudge = 5.0f;
+            projectile.body.position = body.position + 
+                facingDirection * 
+                (body.radius + projectile.body.radius + nudge);
+            // Launch projectile forward
+            projectile.Fly(facingDirection);
+            // Add projectile to top-level -simulation
+            simulationProjectiles.Add(projectile);
+
+            // Increase santa's speed from weight loss if elf
+            if (projectile.tag == Tag.Elf)
             {
-                Projectile projectile = projectiles.Pop();
-                Console.WriteLine($"Santa throwing {projectile.tag}");
+                speed += speed <= 300f ? 25f : 0f;
+            }
+        }
 
-                // Move out of santa's body
-                float nudge = 5.0f;
-                projectile.body.position = body.position + 
-                    facingDirection * 
-                    (body.radius + projectile.body.radius + nudge);
-                // Launch projectile forward
-                projectile.Fly(facingDirection);
-                // Add projectile to top-level -simulation
-                projectilesIn.Add(projectile);
-
-                // Increase santa's speed from weight loss if elf
-                if (projectile.tag == Tag.Elf)
-                {
-                    speed += speed <= 300f ? 25f : 0f;
-                }
+        /// <summary>
+        /// Set the correct animation and damage based on inventory
+        /// NOTE Could bug out if pickup during throw-action
+        /// </summary>
+        private void SetCorrectAttackState()
+        {
+            // Change animation according to current bottles in inventory
+            if (projectiles.Count > 0 && projectiles.Peek().tag == Tag.Bottle)
+            {
+                animation = bottleAnimation;
+                meleeDamage = 2; // BOTTLE_DAMAGE
             }
             else
             {
-                Console.WriteLine("Santa's out of projectiles");
-                //playErrorSound();
+                animation = fistAnimation;
+                meleeDamage = 1; // FIST_DAMAGE
             }
+        }
+
+        private ActionSequence SwingAction()
+        {
+            return new ActionSequence(new (uint, Action)[]{
+                (0, () =>
+                { 
+                    Console.WriteLine("Swing started");
+                    // Start the animation
+                    animation.PlayOnce();
+                }),
+                (5, () =>
+                {
+                    Console.WriteLine("Melee activated");
+                    // Position hitbox to front
+                    melee.position = body.position + 
+                        (facingDirection * (body.radius + melee.radius));
+                    // Activate melee hitbox
+                    melee.active = true;
+                }),
+                (8, () =>
+                {
+                    Console.WriteLine("Melee disabled");
+                    // Disable melee hitbox
+                    melee.active = false;
+                }),
+                (12, () =>
+                {
+                    Console.WriteLine("Swinging ended.");
+                })
+            });
+        }
+
+        private ActionSequence ThrowAction()
+        {
+            return new ActionSequence(new (uint, Action)[]{
+                (0, () =>
+                {
+                    Console.WriteLine("Throw started.");
+                    // Set throwing animation
+                    animation = fistAnimation;
+                    // Start animation
+                    animation.PlayOnce();
+                }),
+                (5, () =>
+                {
+                    Console.WriteLine("Projectile launched.");
+                    LaunchProjectile();
+                }),
+                (10, () =>
+                {
+                    Console.WriteLine("Throw ended.");
+                    // Set original animation
+                    SetCorrectAttackState();
+                })
+            });
         }
     }
 }

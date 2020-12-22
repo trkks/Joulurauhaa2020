@@ -8,3 +8,4 @@ Content/obj
 *.bmp
 Content/Content.mgcb
 debug_*
+.vs

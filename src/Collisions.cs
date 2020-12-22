@@ -16,6 +16,7 @@ namespace Joulurauhaa2020
                 if (toBeRemoved == null) // Stupid flag for melee vs pickup
                 {
                     elf.Hurt(santa.meleeDamage);
+                    Console.WriteLine($"MELEE HIT: {santa.meleeDamage}");
                 }
                 else
                 {
@@ -29,7 +30,7 @@ namespace Joulurauhaa2020
         public static void Handle(Santa santa, Projectile projectile,
                                   List<Projectile> toBeRemoved)
         {
-            Console.WriteLine($"Santa to {projectile.tag} collision");
+            //Console.WriteLine($"Santa to {projectile.tag} collision");
             if (projectile.StateIs(Projectile.State.Pickup))
             {
                 santa.AddProjectile(projectile);
@@ -66,7 +67,7 @@ namespace Joulurauhaa2020
 
         public static void Handle(Elf elf, Projectile projectile)
         {
-            System.Console.WriteLine("Collision: Elf to projectile");
+            //System.Console.WriteLine("Collision: Elf to projectile");
             if (elf.alive)
             {
                 if (projectile.StateIs(Projectile.State.Flying))
@@ -100,7 +101,7 @@ namespace Joulurauhaa2020
         public static void Handle(Projectile projectile1,
                                   Projectile projectile2)
         {
-            System.Console.WriteLine("Collision: Projectile to projectile");
+            //System.Console.WriteLine("Collision: Projectile to projectile");
             projectile1.Bounce(
                 projectile1.body.position - projectile2.body.position);
             projectile2.Bounce(
@@ -109,7 +110,7 @@ namespace Joulurauhaa2020
  
         public static void Handle(Projectile projectile, Wall wall)
         {
-            System.Console.WriteLine("Collision: Projectile to wall");
+            //System.Console.WriteLine("Collision: Projectile to wall");
             if (projectile.StateIs(Projectile.State.Flying))
             {
                 projectile.Bounce(wall.direction);
