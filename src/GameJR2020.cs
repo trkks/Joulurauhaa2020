@@ -12,14 +12,17 @@ namespace Joulurauhaa2020
         // Global static fields
         public static Color colorOfDeath = new Color(0xa9, 0xa9, 0xa9);
         public static Color colorOfHurt = Color.Red;
+        public static Vector2 bottlesPosition;
+        public static Random random = new Random();
 
         private static Vector2 sceneDimensions = new Vector2(800,600);
-        private static Random random = new Random();
         private static Vector2 playerStartPosition = new Vector2(400, 400);
+        private static Vector2 pointsPosition;
         //private static Timer playtime; //TODO use gametime.TotalGameTime?
 
         // Value-type fields
         private int elfSpawnRate = 600;
+        private uint points = 0;
         private Vector2 scenePosition;
         private Vector2 overlayPosition;
 
@@ -29,6 +32,7 @@ namespace Joulurauhaa2020
         private GraphicsDevice device; // "The hardware graphical device"
 
         // "Cosmetic" objects
+        private static SpriteFont font;
         private static Texture2D floorTexture;
         private static Texture2D elfTexture;
         private static Texture2D bottleTexture;
@@ -77,9 +81,9 @@ namespace Joulurauhaa2020
 
         private void SpawnBottle()
         {
-            // Choose a door
-            // Play the door's animation
-            // Spawn a bottle at the door
+            // Choose a (predefined?) position
+            // Play spawn animation
+            // Add a bottle at position
             var bottlePosition = scenePosition + new Vector2(
                 (float)random.NextDouble() * sceneDimensions.X,
                 (float)random.NextDouble() * sceneDimensions.Y
@@ -92,9 +96,10 @@ namespace Joulurauhaa2020
 
         private void SpawnElf()
         {
-            // Choose a door
-            // Play the door's animation
-            // Spawn an elf at the door
+            //return;
+            // Choose a (predefined?) position
+            // Play spawn animation
+            // Add an elf at position
             var elfPosition = scenePosition + new Vector2(
                 (float)random.NextDouble() * sceneDimensions.X,
                 (float)random.NextDouble() * sceneDimensions.Y
@@ -116,9 +121,13 @@ namespace Joulurauhaa2020
                      sceneDimensions.Y
             ) / 2f;
                                          // - Thickness of overlay
-            overlayPosition = scenePosition - new Vector2(10); 
+            overlayPosition = scenePosition + new Vector2(-10); 
+            pointsPosition =  scenePosition + new Vector2(20, -45);
+            bottlesPosition = scenePosition + new Vector2(20, 
+                                                  sceneDimensions.Y+45);
 
             // Global visuals:
+            font = Content.Load<SpriteFont>("font");
             bottleTexture = Content.Load<Texture2D>("bottle");
             floorTexture = Content.Load<Texture2D>("floor");
             elfTexture = Content.Load<Texture2D>("elf_atlas");
@@ -137,7 +146,6 @@ namespace Joulurauhaa2020
             player.AddProjectile(CreateBottle());
 
             elves = new List<Elf>(128);
-
 
             // Make some debug elves and bottles
             for (int i = 0; i < 10; ++i)
@@ -174,6 +182,12 @@ namespace Joulurauhaa2020
 
         protected override void Update(GameTime gameTime)
         {
+            // Increase points from survival time
+            if (gameTime.TotalGameTime.Milliseconds % 1000 == 0)
+            {
+                points += 5;
+            }
+
             // Spawn new elves 
             if (gameTime.TotalGameTime.Milliseconds % elfSpawnRate == 0)
             {
@@ -230,14 +244,14 @@ namespace Joulurauhaa2020
 
                 if (elf.body.Colliding(player.body))
                 {
-                    Collisions.Handle(player, elf, removableElves);
+                    Collisions.Handle(player, elf, removableElves, ref points);
                 }
 
                 if (elf.body.Colliding(player.melee))
                 {
                     // TODO if elf was hit last frame, do not go here
                     // ie. only check collision once per a "continuous event"
-                    Collisions.Handle(player, elf, null);
+                    Collisions.Handle(player, elf, null, ref points);
                 }
 
                 foreach (Wall wall in walls)
@@ -255,7 +269,7 @@ namespace Joulurauhaa2020
                 {
                     if (projectile.body.Colliding(elf.body))
                     {
-                        Collisions.Handle(elf, projectile);
+                        Collisions.Handle(elf, projectile, ref points);
                     }
                 }
 
@@ -368,7 +382,14 @@ namespace Joulurauhaa2020
                 SpriteEffects.None,
                 0
             );
-            
+
+            spriteBatch.DrawString(
+                font, 
+                $"Joulupisteet: {points}",
+                pointsPosition,
+                Color.White
+            );
+
             
             spriteBatch.End();
 

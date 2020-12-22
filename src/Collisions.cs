@@ -9,20 +9,27 @@ namespace Joulurauhaa2020
     /// </summary>
     public static class Collisions
     {
-        public static void Handle(Santa santa, Elf elf, List<Elf> toBeRemoved)
+        public static void Handle(Santa santa, Elf elf, List<Elf> toBeRemoved,
+                                  ref uint points)
         {
             if (elf.alive)
             {
                 if (toBeRemoved == null) // Stupid flag for melee vs pickup
                 {
-                    elf.Hurt(santa.meleeDamage);
+                    bool died = elf.Hurt(santa.meleeDamage);
+                    if (died)
+                    {
+                        points += 20;
+                    }
                     Console.WriteLine($"MELEE HIT: {santa.meleeDamage}");
                 }
                 else
                 {
-                    santa.AddProjectile(elf.AsProjectile());
-                    // Set elf to be removed because it's attached to player
-                    toBeRemoved.Add(elf);
+                    if (santa.AddProjectile(elf.AsProjectile()))
+                    {
+                        // Set elf to be removed, as it's attached to player
+                        toBeRemoved.Add(elf);
+                    }
                 }
             }
         }
@@ -33,8 +40,10 @@ namespace Joulurauhaa2020
             //Console.WriteLine($"Santa to {projectile.tag} collision");
             if (projectile.StateIs(Projectile.State.Pickup))
             {
-                santa.AddProjectile(projectile);
-                toBeRemoved.Add(projectile);
+                if (santa.AddProjectile(projectile))
+                {
+                    toBeRemoved.Add(projectile);
+                }
             }
         }
    
@@ -64,7 +73,8 @@ namespace Joulurauhaa2020
             }
         }
 
-        public static void Handle(Elf elf, Projectile projectile)
+        public static void Handle(Elf elf, Projectile projectile, 
+                                  ref uint points)
         {
             //System.Console.WriteLine("Collision: Elf to projectile");
             if (elf.alive)
@@ -73,7 +83,11 @@ namespace Joulurauhaa2020
                 {
                     projectile.Bounce(Vector2.Normalize(
                         projectile.body.position - elf.body.position));
-                    elf.Hurt(projectile.damage);
+                    bool died = elf.Hurt(projectile.damage);
+                    if (died)
+                    {
+                        points += 50;
+                    }
                     //elf.Die(); 
                 }
                 else if (projectile.tag == Tag.Elf)

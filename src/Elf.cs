@@ -19,6 +19,7 @@ namespace Joulurauhaa2020
         public Vector2 direction;
 
         private float directionLerp;
+        private AnimatedTexture2D winAnimation;
  
         public Vector2 Direction 
         {
@@ -35,10 +36,15 @@ namespace Joulurauhaa2020
                 new uint[4] { 5, 3, 5, 3 }, 0.5f);
             this.body = new CircleBody(20, position);
             this.health = 2;
-
+            this.winAnimation = new AnimatedTexture2D(spriteAtlas, 
+                new Point(32,32), new Vector2(16,16),
+                new uint[4] { 15, 9, 15, 9 }, 0.5f);
+         
             ResetSpeed();
             // Start animation immediately
             this.animation.animating = true;
+            // Also "start" win animation here prematurely
+            this.winAnimation.animating = true;
         }
 
         public Projectile AsProjectile()
@@ -66,7 +72,7 @@ namespace Joulurauhaa2020
             animation.Draw(spriteBatch, body.position, angle);
         }
 
-        public void Hurt(int damage)
+        public bool Hurt(int damage)
         {
             health -= damage;
             if (health <= 1)
@@ -77,7 +83,9 @@ namespace Joulurauhaa2020
             if (health <= 0)
             {
                 Die();
+                return true;
             }
+            return false;
         }
 
         public void ResetSpeed()
@@ -97,16 +105,32 @@ namespace Joulurauhaa2020
         public void Update(float deltaTime, Santa santa)
         {
             // FIXME lerpin aint workin
-            if (directionLerp >= 1f)
-            {   
-                directionLerp = 0;
-            }
-            directionLerp += 0.05f;
+            //if (directionLerp >= 1f)
+            //{   
+            //    directionLerp = 0;
+            //}
+
+            directionLerp += 0.1f;            
             Direction = Vector2.Lerp(
                 Direction, santa.body.position-body.position,
                 directionLerp);
             angle = (float)Math.Atan2(Direction.Y, Direction.X);
-            body.position += Direction * speed * deltaTime;
+            
+            if (santa.IsDead)
+            {
+                if (animation != winAnimation)
+                {
+                    animation = winAnimation;
+                    // Swing in sync with other spawned elves
+                    directionLerp = 0;
+                }
+                // Rock back and forth to simulate dancing
+                angle += (float)Math.Clamp(Math.Sin(directionLerp), -.5, .5);
+            }
+            else
+            {
+                body.position += Direction * speed * deltaTime;
+            }
         }
     }
 }

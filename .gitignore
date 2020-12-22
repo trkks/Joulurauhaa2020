@@ -6,6 +6,7 @@ Content/bin
 Content/obj
 *.png
 *.bmp
+*.spritefont
 Content/Content.mgcb
 debug_*
 .vs

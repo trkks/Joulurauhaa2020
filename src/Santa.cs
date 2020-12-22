@@ -58,10 +58,10 @@ namespace Joulurauhaa2020
             this.melee.active = false;
         }
 
-        public void AddProjectile(Projectile projectile)
+        public bool AddProjectile(Projectile projectile)
         {
-            // Disable hitbox etc
-            projectile.Reset();
+            bool added = false;
+
 
             if (projectile.tag == Tag.Elf)
             {
@@ -77,6 +77,7 @@ namespace Joulurauhaa2020
 
                 // Add elf
                 projectiles.Push(projectile);
+                added = true;
                 // Slow down walking speed
                 speed -= speed >= 50f ? 25f : 0f;
 
@@ -97,11 +98,20 @@ namespace Joulurauhaa2020
                     //TODO visualize bottle-inventory on screen (position)
                     // Push bottle on top
                     projectiles.Push(projectile);
+                    added = true;
                 }
+            }
+
+            if (added)
+            {
+                // Disable hitbox etc
+                projectile.Reset();
             }
 
             // Update attack state according to pickup
             SetCorrectAttackState();
+
+            return added;
         }
 
         public void Draw(SpriteBatch spriteBatch)
