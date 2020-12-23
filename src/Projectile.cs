@@ -80,7 +80,15 @@ namespace Joulurauhaa2020
         {
             bounceCount = 0;
             state = State.Broken;
-            body.active = false;
+            if (tag == Tag.Bottle) 
+            {
+                // NOTE Non-generalizable hack for broken bottles
+                //TODO Make hitbox just slightly smaller
+            }
+            else
+            {
+                body.active = false;
+            }
             animation.color = GameJR2020.colorOfDeath;
             animation.layer = 0.25f;
             animation.PlayOnce();

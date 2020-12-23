@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
@@ -32,6 +33,7 @@ namespace Joulurauhaa2020
         private GraphicsDevice device; // "The hardware graphical device"
 
         // "Cosmetic" objects
+        private static SoundEffectInstance theme;
         private static SpriteFont font;
         private static Texture2D floorTexture;
         private static Texture2D elfTexture;
@@ -125,6 +127,11 @@ namespace Joulurauhaa2020
             pointsPosition =  scenePosition + new Vector2(20, -45);
             bottlesPosition = scenePosition + new Vector2(20, 
                                                   sceneDimensions.Y+45);
+
+            // Global sounds:
+            theme = Content.Load<SoundEffect>("theme").CreateInstance();
+            theme.IsLooped = true;
+            theme.Play();
 
             // Global visuals:
             font = Content.Load<SpriteFont>("font");
@@ -252,6 +259,11 @@ namespace Joulurauhaa2020
                     // TODO if elf was hit last frame, do not go here
                     // ie. only check collision once per a "continuous event"
                     Collisions.Handle(player, elf, null, ref points);
+                    elf.invincible = true;
+                }
+                else
+                {
+                    elf.invincible = false;
                 }
 
                 foreach (Wall wall in walls)
@@ -399,6 +411,7 @@ namespace Joulurauhaa2020
         private void GameOver()
         {
             //TODO
+            // elves.updateAction = Elf.Dance;
             //Console.WriteLine("Game over.");
         }
     }

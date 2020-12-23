@@ -9,16 +9,28 @@ namespace Joulurauhaa2020
     public class Elf
     {
         public static float slowdown = 0.4f;
+        public int Health 
+        { //FIXME Great example of "programming to an implementation"
+            set 
+            { 
+                health = value;
+                if (health <= 1)
+                {
+                    animation.color = GameJR2020.colorOfHurt;
+                }
+            }
+        }
 
         public bool alive;
+        public bool invincible;
         public float angle;
         public float speed;
-        public int health;
         public AnimatedTexture2D animation;
         public CircleBody body;
         public Vector2 direction;
 
         private float directionLerp;
+        private int health;
         private AnimatedTexture2D winAnimation;
  
         public Vector2 Direction 
@@ -31,6 +43,7 @@ namespace Joulurauhaa2020
         public Elf(Vector2 position, Texture2D spriteAtlas)
         {
             this.alive = true;
+            this.invincible = false;
             this.animation = new AnimatedTexture2D(spriteAtlas, 
                 new Point(32,32), new Vector2(16,16),
                 new uint[4] { 5, 3, 5, 3 }, 0.5f);
@@ -74,16 +87,19 @@ namespace Joulurauhaa2020
 
         public bool Hurt(int damage)
         {
-            health -= damage;
-            if (health <= 1)
+            if (!invincible)
             {
-                animation.color = GameJR2020.colorOfHurt;
-                //TODO hurtAction.Active = true; to temporarily disable hitbox
-            }
-            if (health <= 0)
-            {
-                Die();
-                return true;
+                health -= damage;
+                //TODO hurtAction.Active=true; to temporarily disable hitbox
+                if (health <= 1)
+                {
+                    animation.color = GameJR2020.colorOfHurt;
+                }
+                if (health <= 0)
+                {
+                    Die();
+                    return true;
+                }
             }
             return false;
         }

@@ -14,7 +14,7 @@ namespace Joulurauhaa2020
         {
             if (elf.alive)
             {
-                if (toBeRemoved == null) // Stupid flag for melee vs pickup
+                if (toBeRemoved == null) // NOTE Stupid flag for melee vs pickup
                 {
                     bool died = elf.Hurt(santa.meleeDamage);
                     if (died)
@@ -94,15 +94,13 @@ namespace Joulurauhaa2020
                 {
                     elf.SlowDown();
                 }
-                // TODO for broken bottles
-                //else if (projectile.tag == Tag.Bottle && projectile.StateIs(Projectile.Pickup)
-                //{
-                //    // Walking over broken bottle hurts
-                //    // NOTE Set to 1 because I can't be arsed to implement
-                //    // hitbox timers and such
-                //    //elf.health = 1;
-                //    elf.Die();
-                //}
+                else if (projectile.tag == Tag.Bottle && 
+                         projectile.StateIs(Projectile.State.Broken))
+                {
+                    // Broken bottles hurt elves once when walking over
+                    //NOTE Set to 1 cos I cant be arsed with the time I have rn
+                    elf.Health = 1;
+                }
             }
         }
 
