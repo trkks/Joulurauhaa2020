@@ -17,6 +17,7 @@ namespace Joulurauhaa2020
                 if (health <= 1)
                 {
                     animation.color = GameJR2020.colorOfHurt;
+                    movementSpeed = 50;
                 }
             }
         }
@@ -30,6 +31,7 @@ namespace Joulurauhaa2020
         public Vector2 direction;
 
         private float directionLerp;
+        private float movementSpeed;
         private int health;
         private AnimatedTexture2D winAnimation;
  
@@ -53,6 +55,7 @@ namespace Joulurauhaa2020
                 new Point(32,32), new Vector2(16,16),
                 new uint[4] { 15, 9, 15, 9 }, 0.5f);
          
+            this.movementSpeed = 100;
             ResetSpeed();
             // Start animation immediately
             this.animation.animating = true;
@@ -70,7 +73,6 @@ namespace Joulurauhaa2020
             return projectile;
         }
 
-        // TODO change this into Hurt()?
         public void Die()
         {
             animation.animating = false;
@@ -93,6 +95,7 @@ namespace Joulurauhaa2020
                 //TODO hurtAction.Active=true; to temporarily disable hitbox
                 if (health <= 1)
                 {
+                    movementSpeed = 50;
                     animation.color = GameJR2020.colorOfHurt;
                 }
                 if (health <= 0)
@@ -106,20 +109,18 @@ namespace Joulurauhaa2020
 
         public void ResetSpeed()
         {
-            speed = 100;
+            speed = movementSpeed;
         }
 
         public void SlowDown()
         {
-            speed *= Elf.slowdown;
-            if (speed < 10)
-            {
-                speed = 10;
-            }
+            // FIXME slowdown aint working; collisions fricked?
+            speed *= slowdown;
         }
 
         public void Update(float deltaTime, Santa santa)
         {
+            if (speed != movementSpeed) Console.WriteLine(speed);
             // FIXME lerpin aint workin
             //if (directionLerp >= 1f)
             //{   

@@ -26,10 +26,15 @@ namespace Joulurauhaa2020
             this.origin = dimensions / 2f; // Origin always dead center
         }
 
-        // TODO Write own collision, so that clipping through is impossible
-        // eg. try to throw projectile straight at a wall
+        public bool Colliding(CircleBody target)
+        {
+            // TODO collision, so that clipping through is impossible
+            return body.Colliding(target);
+        }
+
         public void PushAway(CircleBody target)
         {
+            // TODO math
             while (body.Colliding(target))
             {
                 // Push away from wall

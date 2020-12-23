@@ -95,7 +95,6 @@ namespace Joulurauhaa2020
                     .Length; 
                 if (bottleCount < 3) // MAX_BOTTLES
                 {
-                    //TODO visualize bottle-inventory on screen (position)
                     // Push bottle on top
                     projectiles.Push(projectile);
                     added = true;
@@ -120,13 +119,8 @@ namespace Joulurauhaa2020
 
             foreach (Projectile p in projectiles)
             {
-                // Only draw elves in inventory
-                if (p.tag == Tag.Elf)
-                {
-                    p.Draw(spriteBatch);
-                }
+                p.Draw(spriteBatch);
             }
-            //TODO visualize bottle-inventory on screen (draw)
         }
 
         public void Update(float deltaTime)
@@ -222,6 +216,7 @@ namespace Joulurauhaa2020
 
             // Position the elf-projectiles attached to santa:
             float hangingIndex = 1f;
+            float bottleIndex = -1f;
             float nudge = 1.2f;
             foreach (Projectile p in projectiles)
             {
@@ -243,6 +238,13 @@ namespace Joulurauhaa2020
 
                     // Increment the rotation multiplier
                     hangingIndex += 1f;
+                }
+                else if (p.tag == Tag.Bottle)
+                {
+                    p.body.position = GameJR2020.bottlesPosition +
+                        new Vector2(bottleIndex * p.body.radius + 5f, 0);
+                    p.angle = (float)(Math.PI/4.0);
+                    bottleIndex -= 1f;
                 }
             }
         }

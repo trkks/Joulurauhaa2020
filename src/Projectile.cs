@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Audio;
 
 namespace Joulurauhaa2020
 {
@@ -26,6 +27,7 @@ namespace Joulurauhaa2020
         public Tag tag;
         public AnimatedTexture2D animation;
         public CircleBody body; // Object spinning in air -> use circles
+        public SoundEffectInstance breakSound;
 
         private const float bounceMultiplier = 1.5f;
         private readonly float originalSpeed;
@@ -49,6 +51,16 @@ namespace Joulurauhaa2020
             this.speed = speed;
             this.state = state;
             this.tag = tag;
+            // NOTE Crunch-hack
+            if (tag == Tag.Bottle)
+            {
+                this.breakSound = GameJR2020.GetBottleBreakSound();
+            }
+            else
+            {
+                this.breakSound = null;
+            }
+            
 
             // TODO 0.8f == GameJR2020.ProjectileLayer
             this.animation.layer = 0.8f;
@@ -82,7 +94,8 @@ namespace Joulurauhaa2020
             state = State.Broken;
             if (tag == Tag.Bottle) 
             {
-                // NOTE Non-generalizable hack for broken bottles
+                // NOTE Non-generalizable hack for spawning or broken bottles
+                breakSound.Play();
                 //TODO Make hitbox just slightly smaller
             }
             else

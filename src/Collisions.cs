@@ -17,6 +17,15 @@ namespace Joulurauhaa2020
                 if (toBeRemoved == null) // NOTE Stupid flag for melee vs pickup
                 {
                     bool died = elf.Hurt(santa.meleeDamage);
+                    if (santa.meleeDamage == 2)
+                    {
+                        GameJR2020.PlayBottleHit();
+                    }
+                    else
+                    {
+                        GameJR2020.PlayFistHit();
+                    }
+
                     if (died)
                     {
                         points += 20;
@@ -27,6 +36,7 @@ namespace Joulurauhaa2020
                 {
                     if (santa.AddProjectile(elf.AsProjectile()))
                     {
+                        GameJR2020.elfGrab.CreateInstance().Play();
                         // Set elf to be removed, as it's attached to player
                         toBeRemoved.Add(elf);
                     }
@@ -43,6 +53,18 @@ namespace Joulurauhaa2020
                 if (santa.AddProjectile(projectile))
                 {
                     toBeRemoved.Add(projectile);
+
+                    switch (projectile.tag)
+                    {
+                    case Tag.Bottle:
+                        GameJR2020.PlayBottlePickup();
+                        break;
+                    case Tag.Elf:
+                        GameJR2020.elfGrab.CreateInstance().Play();
+                        break;
+                    default:
+                        break;
+                    }
                 }
             }
         }
@@ -88,7 +110,18 @@ namespace Joulurauhaa2020
                     {
                         points += 50;
                     }
-                    //elf.Die(); 
+
+                    switch (projectile.tag)
+                    {
+                    case Tag.Bottle:
+                        GameJR2020.PlayBottleHit();
+                        break;
+                    case Tag.Elf:
+                        GameJR2020.PlayFistHit();
+                        break;
+                    default:
+                        break;
+                    }
                 }
                 else if (projectile.tag == Tag.Elf)
                 {
@@ -99,6 +132,7 @@ namespace Joulurauhaa2020
                 {
                     // Broken bottles hurt elves once when walking over
                     //NOTE Set to 1 cos I cant be arsed with the time I have rn
+                    //GameJR2020.elfHurt.Play();
                     elf.Health = 1;
                 }
             }
@@ -125,6 +159,18 @@ namespace Joulurauhaa2020
             if (projectile.StateIs(Projectile.State.Flying))
             {
                 projectile.Bounce(wall.direction);
+
+                switch (projectile.tag)
+                {
+                case Tag.Bottle:
+                    GameJR2020.PlayBottleHit();
+                    break;
+                case Tag.Elf:
+                    GameJR2020.PlayFistHit();
+                    break;
+                default:
+                    break;
+                }
             }
             else
             {
