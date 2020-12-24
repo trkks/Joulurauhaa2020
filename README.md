@@ -7,15 +7,9 @@
 # Installing
 
 ## You need
-- .NET Core CLI (https://dotnet.microsoft.com/download)
-- Monogame 
-`dotnet add package MonoGame.Framework.DesktopGL --version 3.8.0.1641` 
-- MGCB editor
-`dotnet tool install --global dotnet-mgcb-editor --version 3.8.0.1641`
+- .NET Core CLI (https://dotnet.microsoft.com/download) (version >=3.1.302) 
 
 ## How to run
 - Clone this repo to a new directory
-- Compile the assets in Content/ using Content/Content.mgcb and the MGCB editor
-- Compile the code with Powershell: `dotnet build` 
+- In repo's root directory compile the code with command (this might take a while): `dotnet build` 
 - If no errors are shown, run with: `dotnet run`
-
