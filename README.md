@@ -1,5 +1,7 @@
 # 2020 Issue of Bottle-Swingy Merrines
 
+![Screenshot](https://raw.githubusercontent.com/trkks/Joulurauhaa2020/main/jr2020screenshot.png)
+
 ## A Few New Exciting Features
 - Bottle can be thrown for keeping foes off your personal space
 - Get those pesky elves off your back by hurling them cross the room
