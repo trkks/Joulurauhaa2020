@@ -119,12 +119,18 @@ namespace Joulurauhaa2020
 
             foreach (Projectile p in projectiles)
             {
-                p.Draw(spriteBatch);
+                // Only draw elves here)
+                if (p.tag == Tag.Elf)
+                {
+                    p.Draw(spriteBatch);
+                }
             }
         }
 
         public void Update(float deltaTime)
         { 
+            if (IsDead)
+            { return; }
             // Get some needed values
             MouseState mState = Mouse.GetState();
             KeyboardState kbState = Keyboard.GetState();
@@ -167,13 +173,13 @@ namespace Joulurauhaa2020
             {
                 if (swinging)
                 {
-                    System.Console.WriteLine("Received input for swinging");
+                    //System.Console.WriteLine("Received input for swinging");
                     action = swingAction;
                     action.Active = true;
                 }
                 else if (throwing)
                 {
-                    System.Console.WriteLine("Received input for throwing");
+                    //System.Console.WriteLine("Received input for throwing");
                     if (projectiles.Count > 0)
                     {
                         action = throwAction;
@@ -181,7 +187,7 @@ namespace Joulurauhaa2020
                     }
                     else
                     {
-                        Console.WriteLine("Santa's out of projectiles");
+                        //Console.WriteLine("Santa's out of projectiles");
                         //playErrorSound();
                     }
                 }
@@ -216,7 +222,6 @@ namespace Joulurauhaa2020
 
             // Position the elf-projectiles attached to santa:
             float hangingIndex = 1f;
-            float bottleIndex = -1f;
             float nudge = 1.2f;
             foreach (Projectile p in projectiles)
             {
@@ -239,14 +244,12 @@ namespace Joulurauhaa2020
                     // Increment the rotation multiplier
                     hangingIndex += 1f;
                 }
-                else if (p.tag == Tag.Bottle)
-                {
-                    p.body.position = GameJR2020.bottlesPosition +
-                        new Vector2(bottleIndex * p.body.radius + 5f, 0);
-                    p.angle = (float)(Math.PI/4.0);
-                    bottleIndex -= 1f;
-                }
             }
+        }
+
+        public Projectile[] GetBottles()
+        {
+            return Array.FindAll(projectiles.ToArray(), p=>p.tag == Tag.Bottle);
         }
 
         /// <summary>
@@ -299,13 +302,13 @@ namespace Joulurauhaa2020
             return new ActionSequence(new (uint, Action)[]{
                 (0, () =>
                 { 
-                    Console.WriteLine("Swing started");
+                    //Console.WriteLine("Swing started");
                     // Start the animation
                     animation.PlayOnce();
                 }),
                 (5, () =>
                 {
-                    Console.WriteLine("Melee activated");
+                    //Console.WriteLine("Melee activated");
                     // Position hitbox to front
                     melee.position = body.position + 
                         (facingDirection * (body.radius + melee.radius));
@@ -314,13 +317,13 @@ namespace Joulurauhaa2020
                 }),
                 (8, () =>
                 {
-                    Console.WriteLine("Melee disabled");
+                    //Console.WriteLine("Melee disabled");
                     // Disable melee hitbox
                     melee.active = false;
                 }),
                 (12, () =>
                 {
-                    Console.WriteLine("Swinging ended.");
+                    //Console.WriteLine("Swinging ended.");
                 })
             });
         }
@@ -330,7 +333,7 @@ namespace Joulurauhaa2020
             return new ActionSequence(new (uint, Action)[]{
                 (0, () =>
                 {
-                    Console.WriteLine("Throw started.");
+                    //Console.WriteLine("Throw started.");
                     // Set throwing animation
                     animation = fistAnimation;
                     // Start animation
@@ -338,12 +341,12 @@ namespace Joulurauhaa2020
                 }),
                 (5, () =>
                 {
-                    Console.WriteLine("Projectile launched.");
+                    //Console.WriteLine("Projectile launched.");
                     LaunchProjectile();
                 }),
                 (10, () =>
                 {
-                    Console.WriteLine("Throw ended.");
+                    //Console.WriteLine("Throw ended.");
                     // Set original animation
                     SetCorrectAttackState();
                 })

@@ -120,7 +120,7 @@ namespace Joulurauhaa2020
 
         public void Update(float deltaTime, Santa santa)
         {
-            if (speed != movementSpeed) Console.WriteLine(speed);
+            //if (speed != movementSpeed) Console.WriteLine(speed);
             // FIXME lerpin aint workin
             //if (directionLerp >= 1f)
             //{   

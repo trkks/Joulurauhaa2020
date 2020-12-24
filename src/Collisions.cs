@@ -30,7 +30,7 @@ namespace Joulurauhaa2020
                     {
                         points += 20;
                     }
-                    Console.WriteLine($"MELEE HIT: {santa.meleeDamage}");
+                    //Console.WriteLine($"MELEE HIT: {santa.meleeDamage}");
                 }
                 else
                 {
@@ -117,7 +117,7 @@ namespace Joulurauhaa2020
                         GameJR2020.PlayBottleHit();
                         break;
                     case Tag.Elf:
-                        GameJR2020.PlayFistHit();
+                        GameJR2020.elfBoink.CreateInstance().Play();
                         break;
                     default:
                         break;
@@ -166,7 +166,7 @@ namespace Joulurauhaa2020
                     GameJR2020.PlayBottleHit();
                     break;
                 case Tag.Elf:
-                    GameJR2020.PlayFistHit();
+                    GameJR2020.elfBoink.CreateInstance().Play();
                     break;
                 default:
                     break;

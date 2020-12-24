@@ -16,7 +16,8 @@ namespace Joulurauhaa2020
         public static Random random = new Random();
         public static Vector2 bottlesPosition;
         public static SoundEffect elfGrab;
-        public static SoundEffect[] bottleBreaks;
+        public static SoundEffect elfBoink;
+        public static SoundEffect bottleBreak;
         public static SoundEffect[] bottleHits;
         public static SoundEffect[] fistHits;
         public static SoundEffect[] bottlePickups;
@@ -32,6 +33,7 @@ namespace Joulurauhaa2020
         private bool gameover = false;
         private bool restarted = false;
         private int spawnRate = 600;
+        private int spawnThreshold = 500;
         private uint points;
         private string pointsText;
         private Vector2 scenePosition;
@@ -45,6 +47,7 @@ namespace Joulurauhaa2020
         // "Cosmetic" objects
         private static SoundEffectInstance theme;
         private static SpriteFont font;
+        private static Texture2D crosshairTexture;
         private static Texture2D floorTexture;
         private static Texture2D elfTexture;
         private static Texture2D bottleTexture;
@@ -73,6 +76,7 @@ namespace Joulurauhaa2020
             graphics.IsFullScreen = true;
             graphics.ApplyChanges();
             Window.Title = "Joulurauhaa2020";
+            IsMouseVisible = false;
             base.Initialize();
         }
 
@@ -92,7 +96,7 @@ namespace Joulurauhaa2020
             playerStartPosition = scenePosition +
                 new Vector2(400, 300);
             overlayPosition = scenePosition +
-                new Vector2(-10); 
+                new Vector2(-60); 
             pointsPosition = scenePosition + 
                 new Vector2(20, -45);
             helpPosition = scenePosition +
@@ -101,17 +105,21 @@ namespace Joulurauhaa2020
                 new Vector2(sceneDimensions.X - 20, sceneDimensions.Y + 40);
 
             spawnPositions = new Vector2[] {
-                scenePosition + new Vector2(  0 + 16, 300     ),
-                scenePosition + new Vector2(800 - 16, 300     ),
-                scenePosition + new Vector2(400     ,   0 + 16)
+                // Left
+                scenePosition + new Vector2(0 + 16, 300 + random.Next(30)),
+                scenePosition + new Vector2(0 + 16, 300 + random.Next(30)),
+                scenePosition + new Vector2(0 + 16, 300 + random.Next(30)),
+                // Right
+                scenePosition + new Vector2(800 - 16, 300 + random.Next(30)),
+                scenePosition + new Vector2(800 - 16, 300 + random.Next(30)),
+                scenePosition + new Vector2(800 - 16, 300 + random.Next(30)),
+                // Top
+                scenePosition + new Vector2(400 + random.Next(30), 0 + 16),
+                scenePosition + new Vector2(400 + random.Next(30), 0 + 16),
+                scenePosition + new Vector2(400 + random.Next(30), 0 + 16)
             };
 
             // Global sounds:
-            bottleBreaks = new SoundEffect[] {
-                Content.Load<SoundEffect>("bottlebreak1"),
-                Content.Load<SoundEffect>("bottlebreak2"),
-                Content.Load<SoundEffect>("bottlebreak3"),
-            };
             bottleHits = new SoundEffect[] {
                 Content.Load<SoundEffect>("bottlehit1"),
                 Content.Load<SoundEffect>("bottlehit2"),
@@ -127,6 +135,8 @@ namespace Joulurauhaa2020
                 Content.Load<SoundEffect>("drink2"),
                 Content.Load<SoundEffect>("drink3")
             };
+            bottleBreak = Content.Load<SoundEffect>("glassbreak");
+            elfBoink = Content.Load<SoundEffect>("boink");
             elfGrab = Content.Load<SoundEffect>("elfGrab");
             theme = Content.Load<SoundEffect>("theme").CreateInstance();
             theme.IsLooped = true;
@@ -135,6 +145,7 @@ namespace Joulurauhaa2020
             // Global visuals:
             font = Content.Load<SpriteFont>("font");
             bottleTexture = Content.Load<Texture2D>("bottle");
+            crosshairTexture = Content.Load<Texture2D>("crosshair");
             floorTexture = Content.Load<Texture2D>("floor");
             elfTexture = Content.Load<Texture2D>("elf_atlas");
             overlayTexture = Content.Load<Texture2D>("overlay");
@@ -183,25 +194,6 @@ namespace Joulurauhaa2020
 
         protected override void Update(GameTime gameTime)
         {
-            // Increase points from survival time every second
-            if (gameTime.TotalGameTime.Milliseconds % 1000 == 0)
-            {
-                points += 5;
-            }
-
-            // Spawn new elves 
-            if (gameTime.TotalGameTime.Milliseconds % spawnRate == 0)
-            {
-                if (random.Next(10) < 1) // 10% chance for bottle
-                {
-                    SpawnBottle();
-                }
-                else
-                {
-                    //SpawnElf();
-                }
-            }
-
             // Handle UI-specific controls
             var kbstate = Keyboard.GetState();
             if (kbstate.IsKeyDown(Keys.Escape))
@@ -325,6 +317,22 @@ namespace Joulurauhaa2020
             elves.RemoveAll(elf => removableElves.Contains(elf));
             projectiles.RemoveAll(proj => removableProjectiles.Contains(proj));
 
+            float bottleIndex = -1f;
+            foreach (Projectile bottle in player.GetBottles())
+            {
+                bottle.body.position = bottlesPosition +
+                    new Vector2(bottleIndex * bottle.body.radius + 5f, 0);
+                bottle.angle = (float)(Math.PI/4.0);
+                bottleIndex -= 1f;
+            }
+
+
+            // Increase points from survival time every second
+            if (gameTime.TotalGameTime.Milliseconds % 1000 == 0)
+            {
+                points += 5;
+            }
+
             // Check for gameover
             if (!gameover)
             {
@@ -334,8 +342,33 @@ namespace Joulurauhaa2020
                 }
                 else
                 {
+                    // Spawn new elves 
+                    if ((int)(gameTime.TotalGameTime.Milliseconds) 
+                        % spawnRate == 0)
+                    {
+                        if (random.Next(10) < 1) // 10% chance for bottle
+                        {
+                            SpawnBottle();
+                        }
+                        else
+                        {
+                            SpawnElf();
+                        }
+                    }
+
+                    // Increase spawnRate
+                    if (points > spawnThreshold)
+                    {
+                        spawnRate = (int)(spawnRate * 0.7);
+                        if (spawnRate < 10)
+                        {
+                            spawnRate = 10;
+                        }
+                        spawnThreshold += 250;
+                    }
+
                     // Update points normally
-                    pointsText = $"Joulupisteet: {points}";
+                   pointsText = $"Joulupisteet: {points}";
                 }
             }
 
@@ -417,6 +450,18 @@ namespace Joulurauhaa2020
                 0
             );
 
+            spriteBatch.Draw(
+                crosshairTexture,
+                Mouse.GetState().Position.ToVector2()-new Vector2(8),
+                null,
+                Color.White,
+                0f,
+                Vector2.Zero,
+                1f,
+                SpriteEffects.None,
+                0
+            );
+
             spriteBatch.DrawString(
                 font, 
                 pointsText,
@@ -431,37 +476,43 @@ namespace Joulurauhaa2020
                 Color.Gray
             );
 
+            foreach (Projectile bottle in player.GetBottles())
+            {
+                bottle.Draw(spriteBatch);
+            }
+
+
             // DEBUG
-            spriteBatch.DrawString(
-                font,
-                $"Elf count: {elves.Count}",
-                new Vector2(50,50),
-                Color.White
-            );
-            spriteBatch.DrawString(
-                font,
-                $"Projectile count: {projectiles.Count}",
-                new Vector2(50,90),
-                Color.White
-            );           
-            spriteBatch.DrawString(
-                font,
-                $"MS: {gameTime.TotalGameTime.Milliseconds}",
-                new Vector2(50,130),
-                Color.White
-            );  
-            spriteBatch.DrawString(
-                font,
-                $"S: {gameTime.TotalGameTime.Seconds}",
-                new Vector2(50,170),
-                Color.White
-            );              
-            spriteBatch.DrawString(
-                font,
-                $"Spawn rate: {spawnRate}",
-                new Vector2(50,210),
-                Color.White
-            );   
+            //spriteBatch.DrawString(
+            //    font,
+            //    $"Elf count: {elves.Count}",
+            //    new Vector2(50,50),
+            //    Color.White
+            //);
+            //spriteBatch.DrawString(
+            //    font,
+            //    $"Projectile count: {projectiles.Count}",
+            //    new Vector2(50,90),
+            //    Color.White
+            //);           
+            //spriteBatch.DrawString(
+            //    font,
+            //    $"MS: {gameTime.TotalGameTime.Milliseconds}",
+            //    new Vector2(50,130),
+            //    Color.White
+            //);  
+            //spriteBatch.DrawString(
+            //    font,
+            //    $"S: {gameTime.TotalGameTime.Seconds}",
+            //    new Vector2(50,170),
+            //    Color.White
+            //);              
+            //spriteBatch.DrawString(
+            //    font,
+            //    $"Spawn rate: {spawnRate}",
+            //    new Vector2(50,210),
+            //    Color.White
+            //);   
             // DEBUG
             
             spriteBatch.End();
@@ -471,8 +522,7 @@ namespace Joulurauhaa2020
 
         public static SoundEffectInstance GetBottleBreakSound()
         {
-            return bottleBreaks[random.Next(bottleBreaks.Length)]
-                .CreateInstance();
+            return bottleBreak.CreateInstance();
         }
 
         public static void PlayBottleHit()
@@ -518,6 +568,7 @@ namespace Joulurauhaa2020
             pointsPosition =  scenePosition + new Vector2(20, -45);
 
             spawnRate = 600;
+            spawnThreshold = 500;
             points = 0;
             gameover = false;
         }
