@@ -73,7 +73,6 @@ namespace Joulurauhaa2020
             // Backbuffer contains what will be drawn to screen
             graphics.PreferredBackBufferWidth = 1366;
             graphics.PreferredBackBufferHeight = 768;
-            graphics.IsFullScreen = true;
             graphics.ApplyChanges();
             Window.Title = "Joulurauhaa2020";
             IsMouseVisible = false;
@@ -82,6 +81,9 @@ namespace Joulurauhaa2020
 
         protected override void LoadContent()
         {
+            // FIXME Checked on VS19: Content loading is suddenly taking 35
+            // seconds
+
             // General fields:
             float wallThickness = 50f;
             spriteBatch = new SpriteBatch(GraphicsDevice);
@@ -138,9 +140,6 @@ namespace Joulurauhaa2020
             bottleBreak = Content.Load<SoundEffect>("glassbreak");
             elfBoink = Content.Load<SoundEffect>("boink");
             elfGrab = Content.Load<SoundEffect>("elfGrab");
-            theme = Content.Load<SoundEffect>("theme").CreateInstance();
-            theme.IsLooped = true;
-            theme.Play();
 
             // Global visuals:
             font = Content.Load<SpriteFont>("font");
@@ -190,6 +189,12 @@ namespace Joulurauhaa2020
                         new Vector2(0, sceneDimensions.Y - 10)
                 )
             };
+
+            // TODO Use a Mediaplayer instead?
+            theme = Content.Load<SoundEffect>("theme").CreateInstance();
+            theme.IsLooped = true;
+            // Start theme here in sync with the gameloop
+            theme.Play();
         }
 
         protected override void Update(GameTime gameTime)
