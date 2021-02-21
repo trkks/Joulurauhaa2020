@@ -81,9 +81,6 @@ namespace Joulurauhaa2020
 
         protected override void LoadContent()
         {
-            // FIXME Checked on VS19: Content loading is suddenly taking 35
-            // seconds
-
             // General fields:
             float wallThickness = 50f;
             spriteBatch = new SpriteBatch(GraphicsDevice);
@@ -486,39 +483,6 @@ namespace Joulurauhaa2020
                 bottle.Draw(spriteBatch);
             }
 
-
-            // DEBUG
-            //spriteBatch.DrawString(
-            //    font,
-            //    $"Elf count: {elves.Count}",
-            //    new Vector2(50,50),
-            //    Color.White
-            //);
-            //spriteBatch.DrawString(
-            //    font,
-            //    $"Projectile count: {projectiles.Count}",
-            //    new Vector2(50,90),
-            //    Color.White
-            //);           
-            //spriteBatch.DrawString(
-            //    font,
-            //    $"MS: {gameTime.TotalGameTime.Milliseconds}",
-            //    new Vector2(50,130),
-            //    Color.White
-            //);  
-            //spriteBatch.DrawString(
-            //    font,
-            //    $"S: {gameTime.TotalGameTime.Seconds}",
-            //    new Vector2(50,170),
-            //    Color.White
-            //);              
-            //spriteBatch.DrawString(
-            //    font,
-            //    $"Spawn rate: {spawnRate}",
-            //    new Vector2(50,210),
-            //    Color.White
-            //);   
-            // DEBUG
             
             spriteBatch.End();
 
@@ -568,8 +532,6 @@ namespace Joulurauhaa2020
             );
             player.AddProjectile(CreateBottle());
 
-            theme.Stop();
-            theme.Play();
             pointsPosition =  scenePosition + new Vector2(20, -45);
 
             spawnRate = 600;
